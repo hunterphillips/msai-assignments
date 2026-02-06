@@ -1,6 +1,6 @@
 # Assignment Container App
 
-This repository is structured as a static container site for class assignment mini-apps.
+A container site for class assignment mini-apps.
 
 ## Structure
 
