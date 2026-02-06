@@ -1,71 +1,95 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap');
+
 :root {
-  --bg: #f1f0ea;
+  --bg: #fafafa;
   --panel: #ffffff;
-  --line: #cfd4be;
-  --text: #132019;
-  --muted: #516051;
-  --accent: #2e6a4a;
+  --line: #e5e5e5;
+  --line-hover: #cfcfcf;
+  --text: #0a0a0a;
+  --text-secondary: #666666;
+  --muted: #888888;
+  --accent: #0d7c5f;
+  --accent-hover: #0a6049;
+  --accent-subtle: #f0faf6;
+  --radius: 10px;
+  --font: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 * {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  margin: 0;
-  font-family: "Avenir Next", "Segoe UI", Arial, sans-serif;
+  font-family: var(--font);
   color: var(--text);
-  background:
-    radial-gradient(circle at 12% 2%, #f7fbf1 0%, #f1f0ea 38%, #f1f0ea 100%),
-    linear-gradient(160deg, #f1f0ea 0%, #e9ecdc 100%);
+  background: var(--bg);
   min-height: 100vh;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
 }
 
 .shell {
-  max-width: 1080px;
-  margin: 28px auto;
-  padding: 0 16px 40px;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 48px 24px 80px;
 }
 
+/* Hero */
+
 .hero {
-  margin-bottom: 20px;
+  margin-bottom: 36px;
 }
 
 .eyebrow {
-  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-size: 0.78rem;
-  margin: 0 0 8px;
+  color: var(--accent);
+  margin-bottom: 8px;
 }
 
 h1 {
-  margin: 0;
-  font-size: 2rem;
+  font-size: 1.875rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
 }
 
 .sub {
-  margin-top: 10px;
-  color: var(--muted);
+  margin-top: 8px;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
 }
+
+/* Grid */
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
 }
+
+/* Cards */
 
 .card {
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: 14px;
-  box-shadow: 0 4px 16px rgba(22, 31, 25, 0.08);
+  border-radius: var(--radius);
+  padding: 20px;
+  transition: border-color 0.15s ease;
+}
+
+.card:hover {
+  border-color: var(--line-hover);
 }
 
 .card h2 {
-  margin: 0;
-  font-size: 1.15rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .meta {
@@ -75,27 +99,59 @@ h1 {
 }
 
 .card p {
-  margin: 0 0 10px;
+  margin: 0 0 12px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.55;
 }
 
 .tags {
   color: var(--muted);
-  font-size: 0.82rem;
+  font-size: 0.8rem;
 }
+
+/* Button */
 
 .btn {
   display: inline-block;
-  margin-top: 4px;
-  border: 1px solid var(--accent);
-  background: var(--accent);
-  color: #fff;
-  text-decoration: none;
-  border-radius: 9px;
-  padding: 8px 12px;
+  margin-top: 6px;
+  font-family: var(--font);
+  font-size: 0.84rem;
   font-weight: 600;
+  text-decoration: none;
+  color: #fff;
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 8px 16px;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
+
+.btn:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+/* Status */
 
 .status {
   color: var(--muted);
-  margin-top: 12px;
+  margin-top: 16px;
+  font-size: 0.9rem;
+}
+
+/* Responsive */
+
+@media (max-width: 600px) {
+  .shell {
+    padding: 32px 16px 64px;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
 }

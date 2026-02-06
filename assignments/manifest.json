@@ -2,7 +2,7 @@
   "assignments": [
     {
       "id": "cost-simulator",
-      "title": "LLM Cost Simulator",
+      "title": "Cost Simulator",
       "description": "Configure usage and user growth assumptions, then compare monthly and total cost across selected LLM models.",
       "path": "/assignments/cost-simulator/",
       "status": "ready",
