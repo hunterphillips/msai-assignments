@@ -4,42 +4,51 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LLM Cost Simulator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #f5f6f0;
+      --bg: #fafafa;
       --panel: #ffffff;
-      --line: #d8dcc8;
-      --text: #1b2a1f;
-      --muted: #566458;
-      --accent: #2f7d52;
-      --accent-soft: #e8f3eb;
-      --danger: #8b2f2f;
-      --radius: 12px;
+      --line: #e5e5e5;
+      --line-hover: #cfcfcf;
+      --text: #0a0a0a;
+      --text-secondary: #666666;
+      --muted: #888888;
+      --accent: #0d7c5f;
+      --accent-hover: #0a6049;
+      --accent-soft: #f0faf6;
+      --danger: #dc2626;
+      --danger-soft: #fef2f2;
+      --radius: 10px;
+      --font: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
 
     * {
       box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
     body {
-      margin: 0;
-      font-family: "Avenir Next", "Segoe UI", Arial, sans-serif;
-      background:
-        radial-gradient(circle at 20% 10%, #eff8f1 0%, #f5f6f0 28%, #f5f6f0 100%),
-        linear-gradient(130deg, #f5f6f0, #ecefdf);
+      font-family: var(--font);
       color: var(--text);
+      background: var(--bg);
       min-height: 100vh;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
     }
 
     .wrap {
       max-width: 1200px;
-      margin: 24px auto;
-      padding: 0 16px 32px;
+      margin: 0 auto;
+      padding: 40px 24px 64px;
     }
 
     .crumb {
-      margin: 0 0 8px;
-      font-size: 0.84rem;
+      margin: 0 0 12px;
+      font-size: 0.82rem;
       color: var(--muted);
     }
 
@@ -49,15 +58,22 @@
       font-weight: 600;
     }
 
+    .crumb a:hover {
+      text-decoration: underline;
+    }
+
     h1 {
-      margin: 0 0 8px;
-      font-size: 1.7rem;
-      letter-spacing: 0.01em;
+      font-size: 1.875rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      line-height: 1.2;
+      margin-bottom: 6px;
     }
 
     p.sub {
-      margin: 0 0 20px;
-      color: var(--muted);
+      margin: 0 0 24px;
+      color: var(--text-secondary);
+      font-size: 0.95rem;
     }
 
     .grid {
@@ -76,19 +92,20 @@
       background: var(--panel);
       border: 1px solid var(--line);
       border-radius: var(--radius);
-      padding: 14px;
-      box-shadow: 0 4px 14px rgba(35, 47, 38, 0.06);
+      padding: 20px;
     }
 
     h2 {
-      margin: 0 0 10px;
-      font-size: 1.05rem;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      margin-bottom: 12px;
     }
 
     .input-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      gap: 12px;
     }
 
     .field {
@@ -101,7 +118,8 @@
     }
 
     label {
-      font-size: 0.82rem;
+      font-size: 0.78rem;
+      font-weight: 500;
       color: var(--muted);
     }
 
@@ -113,18 +131,29 @@
       width: 100%;
       border: 1px solid var(--line);
       border-radius: 8px;
-      padding: 8px 9px;
+      padding: 8px 10px;
       background: #fff;
       color: var(--text);
+      font-size: 0.9rem;
+      transition: border-color 0.15s ease;
+    }
+
+    input[type="number"]:focus, input[type="text"]:focus, select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
     }
 
     input[type="checkbox"] {
-      transform: scale(1.08);
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent);
+      cursor: pointer;
     }
 
     .hint {
       color: var(--muted);
-      font-size: 0.78rem;
+      font-size: 0.76rem;
       margin-top: 4px;
     }
 
@@ -135,23 +164,23 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
     }
 
     th, td {
       border-bottom: 1px solid var(--line);
-      padding: 8px 6px;
+      padding: 10px 8px;
       text-align: left;
-      vertical-align: top;
+      vertical-align: middle;
       white-space: nowrap;
     }
 
     th {
       color: var(--muted);
       font-weight: 600;
-      font-size: 0.78rem;
+      font-size: 0.72rem;
       text-transform: uppercase;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.06em;
     }
 
     td input[type="number"] {
@@ -165,7 +194,7 @@
     .row-actions {
       display: flex;
       gap: 8px;
-      margin-top: 10px;
+      margin-top: 12px;
       flex-wrap: wrap;
     }
 
@@ -174,8 +203,15 @@
       border-radius: 8px;
       background: #fff;
       color: var(--text);
-      padding: 8px 10px;
+      padding: 8px 14px;
       cursor: pointer;
+      font-size: 0.84rem;
+      font-weight: 500;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+
+    button:hover {
+      border-color: var(--line-hover);
     }
 
     button.primary {
@@ -184,37 +220,50 @@
       color: #fff;
     }
 
+    button.primary:hover {
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
+    }
+
     button.warn {
-      border-color: #d7b8b8;
+      border-color: #fecaca;
       color: var(--danger);
+      background: var(--danger-soft);
+    }
+
+    button.warn:hover {
+      border-color: var(--danger);
     }
 
     .totals {
-      margin: 8px 0 0;
+      margin: 4px 0 0;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 8px;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
     }
 
     .pill {
       border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 8px;
+      border-radius: var(--radius);
+      padding: 12px 14px;
       background: var(--accent-soft);
     }
 
     .pill .name {
       display: block;
       color: var(--muted);
-      font-size: 0.78rem;
+      font-size: 0.74rem;
+      font-weight: 500;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      margin-bottom: 2px;
     }
 
     .pill .value {
-      font-size: 1rem;
-      font-weight: 600;
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
     }
 
     .chart-wrap {
@@ -226,17 +275,17 @@
       width: 100%;
       max-width: 100%;
       border: 1px solid var(--line);
-      border-radius: 10px;
+      border-radius: var(--radius);
       background: #fff;
     }
 
     .legend {
-      margin-top: 8px;
+      margin-top: 10px;
       display: flex;
-      gap: 10px;
+      gap: 14px;
       flex-wrap: wrap;
-      font-size: 0.83rem;
-      color: var(--muted);
+      font-size: 0.82rem;
+      color: var(--text-secondary);
     }
 
     .dot {
@@ -255,21 +304,35 @@
 
     .preset-controls {
       border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 10px;
-      background: #fbfcf8;
-      margin-bottom: 10px;
+      border-radius: var(--radius);
+      padding: 14px;
+      background: var(--bg);
+      margin-bottom: 12px;
     }
 
     .preset-grid {
       display: grid;
-      gap: 10px;
+      gap: 12px;
       grid-template-columns: 1fr;
     }
 
     @media (min-width: 700px) {
       .preset-grid {
         grid-template-columns: 1fr 1.5fr;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .wrap {
+        padding: 24px 16px 48px;
+      }
+
+      h1 {
+        font-size: 1.5rem;
+      }
+
+      .input-grid {
+        grid-template-columns: 1fr;
       }
     }
   </style>
