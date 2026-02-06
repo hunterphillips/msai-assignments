@@ -1,0 +1,859 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LLM Cost Simulator</title>
+  <style>
+    :root {
+      --bg: #f5f6f0;
+      --panel: #ffffff;
+      --line: #d8dcc8;
+      --text: #1b2a1f;
+      --muted: #566458;
+      --accent: #2f7d52;
+      --accent-soft: #e8f3eb;
+      --danger: #8b2f2f;
+      --radius: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Avenir Next", "Segoe UI", Arial, sans-serif;
+      background:
+        radial-gradient(circle at 20% 10%, #eff8f1 0%, #f5f6f0 28%, #f5f6f0 100%),
+        linear-gradient(130deg, #f5f6f0, #ecefdf);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .wrap {
+      max-width: 1200px;
+      margin: 24px auto;
+      padding: 0 16px 32px;
+    }
+
+    .crumb {
+      margin: 0 0 8px;
+      font-size: 0.84rem;
+      color: var(--muted);
+    }
+
+    .crumb a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 1.7rem;
+      letter-spacing: 0.01em;
+    }
+
+    p.sub {
+      margin: 0 0 20px;
+      color: var(--muted);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    @media (min-width: 980px) {
+      .grid {
+        grid-template-columns: 380px 1fr;
+      }
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px;
+      box-shadow: 0 4px 14px rgba(35, 47, 38, 0.06);
+    }
+
+    h2 {
+      margin: 0 0 10px;
+      font-size: 1.05rem;
+    }
+
+    .input-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .field {
+      display: grid;
+      gap: 4px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    input, select, button {
+      font: inherit;
+    }
+
+    input[type="number"], input[type="text"], select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 9px;
+      background: #fff;
+      color: var(--text);
+    }
+
+    input[type="checkbox"] {
+      transform: scale(1.08);
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 0.78rem;
+      margin-top: 4px;
+    }
+
+    .model-table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 8px 6px;
+      text-align: left;
+      vertical-align: top;
+      white-space: nowrap;
+    }
+
+    th {
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    td input[type="number"] {
+      min-width: 115px;
+    }
+
+    td input[type="text"] {
+      min-width: 160px;
+    }
+
+    .row-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--text);
+      padding: 8px 10px;
+      cursor: pointer;
+    }
+
+    button.primary {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+
+    button.warn {
+      border-color: #d7b8b8;
+      color: var(--danger);
+    }
+
+    .totals {
+      margin: 8px 0 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 8px;
+    }
+
+    .pill {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px;
+      background: var(--accent-soft);
+    }
+
+    .pill .name {
+      display: block;
+      color: var(--muted);
+      font-size: 0.78rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .pill .value {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .chart-wrap {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    canvas {
+      width: 100%;
+      max-width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+    }
+
+    .legend {
+      margin-top: 8px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-size: 0.83rem;
+      color: var(--muted);
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      display: inline-block;
+      border-radius: 50%;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    .comparison-wrap {
+      overflow-x: auto;
+      margin-top: 10px;
+    }
+
+    .preset-controls {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      background: #fbfcf8;
+      margin-bottom: 10px;
+    }
+
+    .preset-grid {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: 1fr;
+    }
+
+    @media (min-width: 700px) {
+      .preset-grid {
+        grid-template-columns: 1fr 1.5fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <p class="crumb"><a href="/">Assignment Directory</a> / LLM Cost Simulator</p>
+    <h1>LLM Cost Simulator</h1>
+    <p class="sub">Configure user growth and usage assumptions, then compare monthly and total cost across one or more models.</p>
+
+    <div class="grid">
+      <section class="card">
+        <h2>Usage + Growth Inputs</h2>
+        <div class="input-grid" id="configFields">
+          <div class="field">
+            <label for="months">Months</label>
+            <input id="months" type="number" min="1" step="1" value="6">
+          </div>
+          <div class="field">
+            <label for="daysPerMonth">Days per month</label>
+            <input id="daysPerMonth" type="number" min="1" step="1" value="30">
+          </div>
+          <div class="field">
+            <label for="startUsers">Starting users</label>
+            <input id="startUsers" type="number" min="0" step="100" value="0">
+          </div>
+          <div class="field">
+            <label for="endUsers">Ending users</label>
+            <input id="endUsers" type="number" min="0" step="100" value="120000">
+          </div>
+          <div class="field">
+            <label for="inputWords">Input words/user/day</label>
+            <input id="inputWords" type="number" min="0" step="1" value="100">
+          </div>
+          <div class="field">
+            <label for="outputWords">Output words/user/day</label>
+            <input id="outputWords" type="number" min="0" step="1" value="500">
+          </div>
+          <div class="field full">
+            <label for="tokensPerWord">Tokens per word</label>
+            <input id="tokensPerWord" type="number" min="0.1" step="0.01" value="1.33">
+            <div class="hint">Rule-of-thumb conversion for cost calculation. 1.33 ~= 0.75 words/token.</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Model Comparison Setup</h2>
+        <div class="preset-controls">
+          <div class="preset-grid">
+            <div class="field">
+              <label for="providerFilter">Provider</label>
+              <select id="providerFilter"></select>
+            </div>
+            <div class="field">
+              <label for="presetModel">Model preset (PricePerToken)</label>
+              <select id="presetModel"></select>
+            </div>
+          </div>
+          <div class="row-actions">
+            <button id="addPreset" type="button" class="primary">Add selected preset</button>
+            <button id="addVisiblePresets" type="button">Add all from provider</button>
+          </div>
+          <div class="hint">Preset prices sourced from pricepertoken.com (snapshot: February 6, 2026).</div>
+        </div>
+        <div class="model-table-wrap">
+          <table id="modelTable">
+            <thead>
+              <tr>
+                <th>Compare</th>
+                <th>Model</th>
+                <th>Input $ / 1M tok</th>
+                <th>Output $ / 1M tok</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="row-actions">
+          <button id="addModel" type="button">Add custom model</button>
+          <button id="removeModel" type="button" class="warn">Remove selected rows</button>
+        </div>
+      </section>
+    </div>
+
+    <section class="card" style="margin-top: 16px;">
+      <h2>Estimated Cost Totals</h2>
+      <div id="totals" class="totals"></div>
+    </section>
+
+    <section class="card" style="margin-top: 16px;">
+      <h2>Monthly Cost Chart</h2>
+      <div class="chart-wrap">
+        <canvas id="costChart" width="980" height="380"></canvas>
+      </div>
+      <div id="legend" class="legend"></div>
+    </section>
+
+    <section class="card" style="margin-top: 16px;">
+      <h2>Monthly Comparison Table</h2>
+      <div class="comparison-wrap">
+        <table id="comparisonTable">
+          <thead></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const MODEL_CATALOG = [
+      { key: "openai-gpt-5-1", provider: "OpenAI", model: "GPT-5.1", inputPrice: 1.25, outputPrice: 10.0, source: "https://pricepertoken.com/pricing-page/provider/openai" },
+      { key: "openai-o4-mini-high", provider: "OpenAI", model: "o4 Mini High", inputPrice: 1.1, outputPrice: 4.4, source: "https://pricepertoken.com/pricing-page/model/o4-mini-high" },
+      { key: "openai-gpt-5-2-pro", provider: "OpenAI", model: "GPT-5.2 Pro", inputPrice: 21.0, outputPrice: 168.0, source: "https://pricepertoken.com/pricing-page/provider/openai" },
+      { key: "openai-gpt-oss-20b", provider: "OpenAI", model: "GPT-OSS-20B", inputPrice: 0.02, outputPrice: 0.1, source: "https://pricepertoken.com/pricing-page/provider/openai" },
+      { key: "anthropic-claude-haiku-4-5", provider: "Anthropic", model: "Claude Haiku 4.5", inputPrice: 1.0, outputPrice: 5.0, source: "https://pricepertoken.com/pricing-page/provider/anthropic" },
+      { key: "anthropic-claude-sonnet-4-5", provider: "Anthropic", model: "Claude Sonnet 4.5", inputPrice: 3.0, outputPrice: 15.0, source: "https://pricepertoken.com/pricing-page/provider/anthropic" },
+      { key: "anthropic-claude-opus-4-5", provider: "Anthropic", model: "Claude Opus 4.5", inputPrice: 5.0, outputPrice: 25.0, source: "https://pricepertoken.com/pricing-page/provider/anthropic" },
+      { key: "google-gemini-2-5-flash-lite", provider: "Google", model: "Gemini 2.5 Flash Lite", inputPrice: 0.1, outputPrice: 0.4, source: "https://pricepertoken.com/pricing-page/provider/google" },
+      { key: "google-gemini-2-5-flash", provider: "Google", model: "Gemini 2.5 Flash", inputPrice: 0.3, outputPrice: 2.5, source: "https://pricepertoken.com/pricing-page/provider/google" },
+      { key: "google-gemini-2-5-pro", provider: "Google", model: "Gemini 2.5 Pro", inputPrice: 1.25, outputPrice: 10.0, source: "https://pricepertoken.com/pricing-page/provider/google" },
+      { key: "xai-grok-4-1-fast", provider: "xAI", model: "Grok 4.1 Fast", inputPrice: 0.2, outputPrice: 0.5, source: "https://pricepertoken.com/pricing-page/provider/x-ai" },
+      { key: "xai-grok-4", provider: "xAI", model: "Grok 4", inputPrice: 3.0, outputPrice: 15.0, source: "https://pricepertoken.com/pricing-page/provider/x-ai" },
+      { key: "xai-grok-3-mini", provider: "xAI", model: "Grok 3 Mini", inputPrice: 0.3, outputPrice: 0.5, source: "https://pricepertoken.com/pricing-page/provider/x-ai" },
+      { key: "mistral-small-3-1-24b", provider: "Mistral", model: "Mistral Small 3.1 24B", inputPrice: 0.03, outputPrice: 0.11, source: "https://pricepertoken.com/pricing-page/provider/mistral-ai" },
+      { key: "mistral-medium-3-1", provider: "Mistral", model: "Mistral Medium 3.1", inputPrice: 0.4, outputPrice: 2.0, source: "https://pricepertoken.com/pricing-page/provider/mistral-ai" },
+      { key: "mistral-large-3-2512", provider: "Mistral", model: "Mistral Large 3 2512", inputPrice: 0.5, outputPrice: 1.5, source: "https://pricepertoken.com/pricing-page/provider/mistral-ai" },
+      { key: "deepseek-v3-2", provider: "DeepSeek", model: "DeepSeek V3.2", inputPrice: 0.25, outputPrice: 0.38, source: "https://pricepertoken.com/pricing-page/provider/deepseek" },
+      { key: "deepseek-v3-1", provider: "DeepSeek", model: "DeepSeek V3.1", inputPrice: 0.15, outputPrice: 0.75, source: "https://pricepertoken.com/pricing-page/provider/deepseek" },
+      { key: "deepseek-r1", provider: "DeepSeek", model: "DeepSeek R1", inputPrice: 0.7, outputPrice: 2.5, source: "https://pricepertoken.com/pricing-page/provider/deepseek" }
+    ];
+
+    const DEFAULT_PRESET_KEYS = [
+      "google-gemini-2-5-flash-lite",
+      "anthropic-claude-sonnet-4-5",
+      "openai-gpt-5-1"
+    ];
+
+    const state = {
+      models: [],
+      selectedProvider: "All",
+      selectedPresetKey: ""
+    };
+
+    const colors = ["#2f7d52", "#d95f02", "#386cb0", "#f3a712", "#8c3a3a", "#6b7280", "#047857", "#1d4ed8"];
+    const numberFmt = new Intl.NumberFormat("en-US");
+    const moneyFmt = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 });
+
+    const dom = {
+      months: document.getElementById("months"),
+      daysPerMonth: document.getElementById("daysPerMonth"),
+      startUsers: document.getElementById("startUsers"),
+      endUsers: document.getElementById("endUsers"),
+      inputWords: document.getElementById("inputWords"),
+      outputWords: document.getElementById("outputWords"),
+      tokensPerWord: document.getElementById("tokensPerWord"),
+      providerFilter: document.getElementById("providerFilter"),
+      presetModel: document.getElementById("presetModel"),
+      addPreset: document.getElementById("addPreset"),
+      addVisiblePresets: document.getElementById("addVisiblePresets"),
+      modelTbody: document.querySelector("#modelTable tbody"),
+      addModel: document.getElementById("addModel"),
+      removeModel: document.getElementById("removeModel"),
+      totals: document.getElementById("totals"),
+      chart: document.getElementById("costChart"),
+      legend: document.getElementById("legend"),
+      comparisonHead: document.querySelector("#comparisonTable thead"),
+      comparisonBody: document.querySelector("#comparisonTable tbody")
+    };
+
+    function clamp(value, min, fallback) {
+      if (!Number.isFinite(value)) return fallback;
+      return Math.max(min, value);
+    }
+
+    function escapeAttr(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    function readConfig() {
+      const months = Math.round(clamp(parseFloat(dom.months.value), 1, 6));
+      const daysPerMonth = Math.round(clamp(parseFloat(dom.daysPerMonth.value), 1, 30));
+      const startUsers = clamp(parseFloat(dom.startUsers.value), 0, 0);
+      const endUsers = clamp(parseFloat(dom.endUsers.value), 0, 120000);
+      const inputWords = clamp(parseFloat(dom.inputWords.value), 0, 100);
+      const outputWords = clamp(parseFloat(dom.outputWords.value), 0, 500);
+      const tokensPerWord = clamp(parseFloat(dom.tokensPerWord.value), 0.1, 1.33);
+
+      dom.months.value = months;
+      dom.daysPerMonth.value = daysPerMonth;
+      dom.startUsers.value = Math.round(startUsers);
+      dom.endUsers.value = Math.round(endUsers);
+      dom.inputWords.value = inputWords;
+      dom.outputWords.value = outputWords;
+      dom.tokensPerWord.value = tokensPerWord;
+
+      return { months, daysPerMonth, startUsers, endUsers, inputWords, outputWords, tokensPerWord };
+    }
+
+    function computeUsersByMonth(months, startUsers, endUsers) {
+      const arr = [];
+      if (months === 1) {
+        arr.push(startUsers);
+        return arr;
+      }
+      const step = (endUsers - startUsers) / (months - 1);
+      for (let i = 0; i < months; i += 1) {
+        arr.push(startUsers + step * i);
+      }
+      return arr;
+    }
+
+    function computeModelCosts(config, model) {
+      const usersByMonth = computeUsersByMonth(config.months, config.startUsers, config.endUsers);
+      const monthlyCosts = usersByMonth.map((users) => {
+        const inputTokens = users * config.daysPerMonth * config.inputWords * config.tokensPerWord;
+        const outputTokens = users * config.daysPerMonth * config.outputWords * config.tokensPerWord;
+        const inCost = (inputTokens / 1_000_000) * model.inputPrice;
+        const outCost = (outputTokens / 1_000_000) * model.outputPrice;
+        return inCost + outCost;
+      });
+      const total = monthlyCosts.reduce((sum, val) => sum + val, 0);
+      return { usersByMonth, monthlyCosts, total };
+    }
+
+    function getProviders() {
+      const providers = ["All"];
+      MODEL_CATALOG.forEach((item) => {
+        if (!providers.includes(item.provider)) providers.push(item.provider);
+      });
+      return providers;
+    }
+
+    function getFilteredCatalog() {
+      if (state.selectedProvider === "All") return MODEL_CATALOG;
+      return MODEL_CATALOG.filter((item) => item.provider === state.selectedProvider);
+    }
+
+    function renderProviderOptions() {
+      const providers = getProviders();
+      dom.providerFilter.innerHTML = "";
+      providers.forEach((provider) => {
+        const option = document.createElement("option");
+        option.value = provider;
+        option.textContent = provider;
+        dom.providerFilter.appendChild(option);
+      });
+      dom.providerFilter.value = state.selectedProvider;
+    }
+
+    function renderPresetOptions() {
+      const filtered = getFilteredCatalog();
+      dom.presetModel.innerHTML = "";
+
+      filtered.forEach((preset) => {
+        const option = document.createElement("option");
+        option.value = preset.key;
+        const displayPrefix = state.selectedProvider === "All" ? `${preset.provider} - ` : "";
+        option.textContent = `${displayPrefix}${preset.model} (${moneyFmt.format(preset.inputPrice)} in / ${moneyFmt.format(preset.outputPrice)} out)`;
+        dom.presetModel.appendChild(option);
+      });
+
+      const hasSelected = filtered.some((item) => item.key === state.selectedPresetKey);
+      state.selectedPresetKey = hasSelected ? state.selectedPresetKey : (filtered[0] ? filtered[0].key : "");
+      if (state.selectedPresetKey) dom.presetModel.value = state.selectedPresetKey;
+    }
+
+    function presetToModelRow(preset) {
+      return {
+        selected: true,
+        name: `${preset.provider} - ${preset.model}`,
+        inputPrice: preset.inputPrice,
+        outputPrice: preset.outputPrice,
+        presetKey: preset.key
+      };
+    }
+
+    function addPresetByKey(presetKey, rerender) {
+      const preset = MODEL_CATALOG.find((item) => item.key === presetKey);
+      if (!preset) return;
+
+      const exists = state.models.some((model) => model.presetKey === preset.key);
+      if (exists) return;
+
+      state.models.push(presetToModelRow(preset));
+      if (rerender) {
+        renderModels();
+        recalc();
+      }
+    }
+
+    function seedDefaultModels() {
+      if (state.models.length > 0) return;
+      DEFAULT_PRESET_KEYS.forEach((key) => addPresetByKey(key, false));
+      if (state.models.length === 0) {
+        state.models.push({
+          selected: true,
+          name: "Custom Model 1",
+          inputPrice: 1.0,
+          outputPrice: 3.0
+        });
+      }
+    }
+
+    function renderModels() {
+      dom.modelTbody.innerHTML = "";
+      state.models.forEach((model, i) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><input data-key="selected" data-index="${i}" type="checkbox" ${model.selected ? "checked" : ""}></td>
+          <td><input data-key="name" data-index="${i}" type="text" value="${escapeAttr(model.name)}"></td>
+          <td><input data-key="inputPrice" data-index="${i}" type="number" min="0" step="0.01" value="${model.inputPrice}"></td>
+          <td><input data-key="outputPrice" data-index="${i}" type="number" min="0" step="0.01" value="${model.outputPrice}"></td>
+        `;
+        dom.modelTbody.appendChild(tr);
+      });
+    }
+
+    function getSelectedModels() {
+      return state.models.filter((m) => m.selected && m.name.trim().length > 0);
+    }
+
+    function renderTotals(resultByModel) {
+      dom.totals.innerHTML = "";
+      if (!resultByModel.length) {
+        dom.totals.innerHTML = `<div class="pill"><span class="name">No models selected</span><span class="value">Select at least one model.</span></div>`;
+        return;
+      }
+
+      resultByModel.forEach((row) => {
+        const div = document.createElement("div");
+        div.className = "pill";
+        const name = document.createElement("span");
+        name.className = "name";
+        name.textContent = row.name;
+        const value = document.createElement("span");
+        value.className = "value";
+        value.textContent = `${moneyFmt.format(row.total)} total`;
+        const hint = document.createElement("div");
+        hint.className = "hint";
+        hint.textContent = `Avg/mo: ${moneyFmt.format(row.total / row.monthlyCosts.length)}`;
+        div.appendChild(name);
+        div.appendChild(value);
+        div.appendChild(hint);
+        dom.totals.appendChild(div);
+      });
+    }
+
+    function drawChart(resultByModel) {
+      const canvas = dom.chart;
+      const ctx = canvas.getContext("2d");
+      const width = canvas.width;
+      const height = canvas.height;
+      const pad = { top: 22, right: 16, bottom: 44, left: 72 };
+
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, width, height);
+
+      if (!resultByModel.length) {
+        ctx.fillStyle = "#566458";
+        ctx.font = "14px Avenir Next, Segoe UI, Arial";
+        ctx.fillText("Select at least one model to draw the chart.", 26, 36);
+        return;
+      }
+
+      const months = resultByModel[0].monthlyCosts.length;
+      let maxCost = 0;
+      resultByModel.forEach((row) => {
+        row.monthlyCosts.forEach((c) => { maxCost = Math.max(maxCost, c); });
+      });
+      maxCost = maxCost || 1;
+      const roundedMax = Math.ceil(maxCost / 1000) * 1000;
+
+      const plotW = width - pad.left - pad.right;
+      const plotH = height - pad.top - pad.bottom;
+
+      ctx.strokeStyle = "#d8dcc8";
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 5; i += 1) {
+        const y = pad.top + (plotH / 5) * i;
+        ctx.beginPath();
+        ctx.moveTo(pad.left, y);
+        ctx.lineTo(width - pad.right, y);
+        ctx.stroke();
+
+        const v = roundedMax - (roundedMax / 5) * i;
+        ctx.fillStyle = "#566458";
+        ctx.font = "12px Avenir Next, Segoe UI, Arial";
+        ctx.fillText(moneyFmt.format(v), 8, y + 4);
+      }
+
+      ctx.strokeStyle = "#9ea89a";
+      ctx.beginPath();
+      ctx.moveTo(pad.left, pad.top);
+      ctx.lineTo(pad.left, height - pad.bottom);
+      ctx.lineTo(width - pad.right, height - pad.bottom);
+      ctx.stroke();
+
+      function xAt(monthIndex) {
+        if (months === 1) return pad.left + plotW / 2;
+        return pad.left + (plotW / (months - 1)) * monthIndex;
+      }
+
+      function yAt(cost) {
+        return pad.top + (1 - cost / roundedMax) * plotH;
+      }
+
+      for (let i = 0; i < months; i += 1) {
+        const x = xAt(i);
+        ctx.fillStyle = "#566458";
+        ctx.font = "11px Avenir Next, Segoe UI, Arial";
+        ctx.fillText(`M${i + 1}`, x - 9, height - 18);
+      }
+
+      resultByModel.forEach((row, i) => {
+        ctx.strokeStyle = colors[i % colors.length];
+        ctx.lineWidth = 2.3;
+        ctx.beginPath();
+        row.monthlyCosts.forEach((cost, monthIndex) => {
+          const x = xAt(monthIndex);
+          const y = yAt(cost);
+          if (monthIndex === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+
+        ctx.fillStyle = colors[i % colors.length];
+        row.monthlyCosts.forEach((cost, monthIndex) => {
+          const x = xAt(monthIndex);
+          const y = yAt(cost);
+          ctx.beginPath();
+          ctx.arc(x, y, 3.2, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      });
+    }
+
+    function renderLegend(resultByModel) {
+      dom.legend.innerHTML = "";
+      resultByModel.forEach((row, i) => {
+        const item = document.createElement("span");
+        const dot = document.createElement("span");
+        dot.className = "dot";
+        dot.style.background = colors[i % colors.length];
+        item.appendChild(dot);
+        item.appendChild(document.createTextNode(row.name));
+        dom.legend.appendChild(item);
+      });
+    }
+
+    function renderComparisonTable(resultByModel, usersByMonth) {
+      dom.comparisonHead.innerHTML = "";
+      dom.comparisonBody.innerHTML = "";
+      if (!resultByModel.length) return;
+
+      const head = document.createElement("tr");
+      const fixedHeaders = ["Month", "Users"];
+      fixedHeaders.forEach((text) => {
+        const th = document.createElement("th");
+        th.textContent = text;
+        head.appendChild(th);
+      });
+      resultByModel.forEach((m) => {
+        const th = document.createElement("th");
+        th.textContent = m.name;
+        head.appendChild(th);
+      });
+      dom.comparisonHead.appendChild(head);
+
+      const months = usersByMonth.length;
+      for (let m = 0; m < months; m += 1) {
+        const tr = document.createElement("tr");
+
+        const monthCell = document.createElement("td");
+        monthCell.textContent = `M${m + 1}`;
+        tr.appendChild(monthCell);
+
+        const userCell = document.createElement("td");
+        userCell.textContent = numberFmt.format(Math.round(usersByMonth[m]));
+        tr.appendChild(userCell);
+
+        resultByModel.forEach((r) => {
+          const td = document.createElement("td");
+          td.textContent = moneyFmt.format(r.monthlyCosts[m]);
+          tr.appendChild(td);
+        });
+
+        dom.comparisonBody.appendChild(tr);
+      }
+    }
+
+    function recalc() {
+      const config = readConfig();
+      const selectedModels = getSelectedModels();
+      const resultByModel = selectedModels.map((model) => {
+        const r = computeModelCosts(config, model);
+        return { ...r, name: model.name };
+      });
+
+      const usersByMonth = computeUsersByMonth(config.months, config.startUsers, config.endUsers);
+      renderTotals(resultByModel);
+      drawChart(resultByModel);
+      renderLegend(resultByModel);
+      renderComparisonTable(resultByModel, usersByMonth);
+    }
+
+    function onModelChange(event) {
+      const target = event.target;
+      const index = parseInt(target.dataset.index, 10);
+      if (!Number.isInteger(index) || !state.models[index]) return;
+
+      const key = target.dataset.key;
+      if (key === "selected") state.models[index].selected = target.checked;
+      if (key === "name") state.models[index].name = target.value;
+      if (key === "inputPrice") state.models[index].inputPrice = clamp(parseFloat(target.value), 0, 0);
+      if (key === "outputPrice") state.models[index].outputPrice = clamp(parseFloat(target.value), 0, 0);
+
+      recalc();
+    }
+
+    function addCustomModel() {
+      state.models.push({
+        selected: true,
+        name: `Custom Model ${state.models.length + 1}`,
+        inputPrice: 1.0,
+        outputPrice: 3.0
+      });
+      renderModels();
+      recalc();
+    }
+
+    function removeSelectedRows() {
+      const checkboxes = Array.from(dom.modelTbody.querySelectorAll('input[data-key="selected"]'));
+      const selectedIndices = checkboxes
+        .filter((cb) => cb.checked)
+        .map((cb) => parseInt(cb.dataset.index, 10))
+        .filter((i) => Number.isInteger(i));
+
+      if (!selectedIndices.length) return;
+
+      state.models = state.models.filter((_, idx) => !selectedIndices.includes(idx));
+      if (state.models.length === 0) {
+        seedDefaultModels();
+      }
+      renderModels();
+      recalc();
+    }
+
+    function addSelectedPreset() {
+      if (!state.selectedPresetKey) return;
+      addPresetByKey(state.selectedPresetKey, true);
+    }
+
+    function addAllVisiblePresets() {
+      const visible = getFilteredCatalog();
+      visible.forEach((preset) => addPresetByKey(preset.key, false));
+      renderModels();
+      recalc();
+    }
+
+    document.getElementById("configFields").addEventListener("input", recalc);
+    dom.providerFilter.addEventListener("change", (event) => {
+      state.selectedProvider = event.target.value;
+      renderPresetOptions();
+    });
+    dom.presetModel.addEventListener("change", (event) => {
+      state.selectedPresetKey = event.target.value;
+    });
+    dom.addPreset.addEventListener("click", addSelectedPreset);
+    dom.addVisiblePresets.addEventListener("click", addAllVisiblePresets);
+    dom.modelTbody.addEventListener("input", onModelChange);
+    dom.addModel.addEventListener("click", addCustomModel);
+    dom.removeModel.addEventListener("click", removeSelectedRows);
+
+    renderProviderOptions();
+    renderPresetOptions();
+    seedDefaultModels();
+    renderModels();
+    recalc();
+  </script>
+</body>
+</html>

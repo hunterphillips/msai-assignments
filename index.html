@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Assignment Directory</title>
+  <link rel="stylesheet" href="/shared/site.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <p class="eyebrow">Course Workbench</p>
+      <h1>Assignment Directory</h1>
+      <p class="sub">Select an assignment to open its standalone mini-app page.</p>
+    </header>
+
+    <section>
+      <div id="assignmentGrid" class="grid"></div>
+      <p id="statusMessage" class="status">Loading assignments...</p>
+    </section>
+  </main>
+
+  <script>
+    async function loadAssignments() {
+      const grid = document.getElementById("assignmentGrid");
+      const status = document.getElementById("statusMessage");
+
+      try {
+        const response = await fetch("/assignments/manifest.json", { cache: "no-store" });
+        if (!response.ok) throw new Error("manifest unavailable");
+        const data = await response.json();
+        const assignments = Array.isArray(data.assignments) ? data.assignments : [];
+
+        if (!assignments.length) {
+          status.textContent = "No assignments are registered yet.";
+          return;
+        }
+
+        assignments.forEach((item) => {
+          const card = document.createElement("article");
+          card.className = "card";
+
+          const title = document.createElement("h2");
+          title.textContent = item.title || "Untitled Assignment";
+
+          const meta = document.createElement("p");
+          meta.className = "meta";
+          meta.textContent = `ID: ${item.id || "n/a"} | Status: ${item.status || "draft"}`;
+
+          const desc = document.createElement("p");
+          desc.textContent = item.description || "No description.";
+
+          const tags = document.createElement("p");
+          tags.className = "tags";
+          tags.textContent = Array.isArray(item.tags) && item.tags.length ? item.tags.join(" • ") : "No tags";
+
+          const link = document.createElement("a");
+          link.className = "btn";
+          link.href = item.path || "#";
+          link.textContent = "Open Assignment";
+
+          card.appendChild(title);
+          card.appendChild(meta);
+          card.appendChild(desc);
+          card.appendChild(tags);
+          card.appendChild(link);
+          grid.appendChild(card);
+        });
+
+        status.textContent = "";
+      } catch (error) {
+        status.textContent = "Could not load assignment manifest.";
+      }
+    }
+
+    loadAssignments();
+  </script>
+</body>
+</html>

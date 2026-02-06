@@ -1,0 +1,101 @@
+:root {
+  --bg: #f1f0ea;
+  --panel: #ffffff;
+  --line: #cfd4be;
+  --text: #132019;
+  --muted: #516051;
+  --accent: #2e6a4a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Avenir Next", "Segoe UI", Arial, sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 12% 2%, #f7fbf1 0%, #f1f0ea 38%, #f1f0ea 100%),
+    linear-gradient(160deg, #f1f0ea 0%, #e9ecdc 100%);
+  min-height: 100vh;
+}
+
+.shell {
+  max-width: 1080px;
+  margin: 28px auto;
+  padding: 0 16px 40px;
+}
+
+.hero {
+  margin-bottom: 20px;
+}
+
+.eyebrow {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.78rem;
+  margin: 0 0 8px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+.sub {
+  margin-top: 10px;
+  color: var(--muted);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 0 4px 16px rgba(22, 31, 25, 0.08);
+}
+
+.card h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.meta {
+  margin: 6px 0 10px;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.card p {
+  margin: 0 0 10px;
+}
+
+.tags {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.btn {
+  display: inline-block;
+  margin-top: 4px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  text-decoration: none;
+  border-radius: 9px;
+  padding: 8px 12px;
+  font-weight: 600;
+}
+
+.status {
+  color: var(--muted);
+  margin-top: 12px;
+}
