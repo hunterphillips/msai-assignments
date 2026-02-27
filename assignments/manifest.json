@@ -7,6 +7,14 @@
       "path": "/assignments/cost-simulator/",
       "status": "ready",
       "tags": ["LLM", "Cost", "Planning"]
+    },
+    {
+      "id": "hello-apps",
+      "title": "Hello Apps",
+      "description": "A trio of 'Hello' apps — Hello World, Hello Chat, and Hello Hume — each with a unique theme, combined into one tabbed interface.",
+      "path": "/assignments/hello-apps/",
+      "status": "ready",
+      "tags": ["Intro", "Chat", "Hume", "EVI", "Voice AI"]
     }
   ]
 }

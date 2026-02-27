@@ -1,0 +1,1032 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hello Apps</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Rock+Salt&family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --shell-bg: #fafafa;
+      --shell-panel: #ffffff;
+      --shell-line: #e5e5e5;
+      --shell-text: #0a0a0a;
+      --shell-muted: #999;
+      --shell-accent: #0d7c5f;
+      --shell-accent-hover: #0a6049;
+      --shell-accent-sub: #f0faf6;
+      --shell-font: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    html, body { height: 100%; font-family: var(--shell-font); color: var(--shell-text); background: var(--shell-bg); }
+
+    .shell { display: flex; flex-direction: column; height: 100vh; }
+
+    /* ===== Top bar ===== */
+    .topbar {
+      display: flex; align-items: center; padding: 0 16px; height: 48px;
+      background: var(--shell-panel); border-bottom: 1px solid var(--shell-line);
+      flex-shrink: 0; gap: 0;
+    }
+    .back-btn {
+      display: flex; align-items: center; gap: 4px; padding: 5px 10px; margin-right: 12px;
+      border: 1px solid var(--shell-line); background: var(--shell-panel);
+      font-family: var(--shell-font); font-size: .75rem; font-weight: 500;
+      color: var(--shell-muted); cursor: pointer; border-radius: 6px;
+      text-decoration: none; white-space: nowrap; transition: border-color .15s, color .15s; flex-shrink: 0;
+    }
+    .back-btn:hover { border-color: var(--shell-accent); color: var(--shell-accent); }
+    .back-btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; }
+    .topbar-sep { width: 1px; height: 18px; background: var(--shell-line); flex-shrink: 0; margin-right: 10px; }
+
+    /* ===== Tabs ===== */
+    .tabs { display: flex; align-items: center; gap: 2px; flex: 1; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .tabs::-webkit-scrollbar { height: 0; }
+    .tab {
+      position: relative; display: flex; align-items: center; gap: 7px; padding: 6px 16px;
+      border: none; background: transparent; font-family: var(--shell-font);
+      font-size: .8rem; font-weight: 500; color: var(--shell-muted);
+      cursor: pointer; border-radius: 6px; white-space: nowrap;
+      transition: color .15s, background .15s;
+    }
+    .tab:hover { color: var(--shell-text); background: #f0f0f0; }
+    .tab.active { color: var(--shell-accent); background: var(--shell-accent-sub); font-weight: 600; }
+    .tab .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ===== Content panels ===== */
+    .content { flex: 1; position: relative; overflow: hidden; }
+    .panel { position: absolute; inset: 0; display: none; overflow: hidden; }
+    .panel.visible { display: flex; flex-direction: column; }
+
+    /* ===== Welcome screen ===== */
+    .shell-welcome {
+      position: absolute; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; text-align: center; padding: 2rem;
+    }
+    .shell-welcome.hidden { display: none; }
+    .shell-welcome-icon { font-size: 2.4rem; margin-bottom: .8rem; }
+    .shell-welcome h2 { font-size: 1.4rem; font-weight: 700; letter-spacing: -.02em; margin-bottom: .3rem; }
+    .shell-welcome p { font-size: .88rem; color: #666; max-width: 380px; line-height: 1.6; }
+
+    @media (max-width: 640px) {
+      .topbar { padding: 0 10px; height: 42px; }
+      .tab { padding: 5px 10px; font-size: .74rem; }
+    }
+
+    /* =========================================================================
+       HELLO WORLD — scoped under #hw-panel
+       ========================================================================= */
+    #hw-panel {
+      align-items: center; justify-content: center;
+      background: #0a0a0a;
+      background-image:
+        radial-gradient(ellipse at 20% 50%, rgba(120, 0, 255, .15) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 50%, rgba(0, 180, 255, .12) 0%, transparent 60%);
+      color: #fff; font-family: 'Bangers', cursive; overflow: hidden;
+    }
+    #hw-panel .hw-stars { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+    #hw-panel .hw-stars span {
+      position: absolute; width: 2px; height: 2px; background: #fff;
+      border-radius: 50%; animation: hw-twinkle 3s ease-in-out infinite alternate;
+    }
+    @keyframes hw-twinkle { 0% { opacity: .2; } 100% { opacity: 1; } }
+
+    #hw-panel .hw-container { position: relative; z-index: 1; text-align: center; padding: 2rem; }
+    #hw-panel .hw-title {
+      font-size: clamp(2.8rem, 8vw, 6rem); letter-spacing: 4px; text-transform: uppercase;
+      background: linear-gradient(135deg, #ff6b00, #ffcc00, #ff6b00);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      filter: drop-shadow(0 0 20px rgba(255, 150, 0, .6)); margin-bottom: .25em;
+      animation: hw-flicker 4s ease-in-out infinite;
+    }
+    @keyframes hw-flicker {
+      0%, 100% { filter: drop-shadow(0 0 20px rgba(255,150,0,.6)); }
+      50% { filter: drop-shadow(0 0 35px rgba(255,150,0,.9)); }
+    }
+    #hw-panel .hw-subtitle {
+      font-family: 'Rock Salt', cursive; font-size: clamp(1rem, 2.5vw, 1.4rem);
+      color: #ccc; margin-bottom: 3rem;
+    }
+    #hw-panel .hw-btn {
+      font-family: 'Bangers', cursive; font-size: clamp(1.4rem, 3vw, 2rem);
+      letter-spacing: 3px; text-transform: uppercase; padding: .8em 2.4em;
+      border: none; border-radius: 8px; color: #000;
+      background: linear-gradient(180deg, #ffcc00 0%, #ff8800 100%);
+      box-shadow: 0 0 15px rgba(255, 200, 0, .5), 0 4px 0 #b35f00, 0 6px 20px rgba(0,0,0,.5);
+      cursor: pointer; transition: transform .1s, box-shadow .2s; position: relative;
+    }
+    #hw-panel .hw-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 30px rgba(255, 200, 0, .8), 0 6px 0 #b35f00, 0 8px 30px rgba(0,0,0,.5);
+    }
+    #hw-panel .hw-btn:active {
+      transform: translateY(2px);
+      box-shadow: 0 0 10px rgba(255, 200, 0, .5), 0 1px 0 #b35f00, 0 2px 10px rgba(0,0,0,.5);
+    }
+    #hw-panel .hw-msg { display: none; margin-top: 2.5rem; }
+    #hw-panel .hw-msg.visible { display: block; animation: hw-rockIn .6s cubic-bezier(.17,.67,.35,1.4); }
+    @keyframes hw-rockIn {
+      0% { opacity: 0; transform: scale(.3) rotate(-8deg); }
+      60% { transform: scale(1.1) rotate(2deg); }
+      100% { opacity: 1; transform: scale(1) rotate(0); }
+    }
+    #hw-panel .hw-hello {
+      font-size: clamp(2.5rem, 7vw, 5rem);
+      background: linear-gradient(90deg, #00e5ff, #ff4081, #ffea00, #00e5ff);
+      background-size: 300% 100%;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      animation: hw-shift 3s linear infinite;
+      filter: drop-shadow(0 0 12px rgba(255,64,129,.5));
+    }
+    @keyframes hw-shift { 0% { background-position: 0% 50%; } 100% { background-position: 300% 50%; } }
+    #hw-panel .hw-party {
+      font-family: 'Rock Salt', cursive; font-size: clamp(.9rem, 2vw, 1.2rem);
+      color: #aaa; margin-top: 1rem;
+    }
+    #hw-panel .hw-guitar { display: inline-block; animation: hw-headbang .4s ease-in-out infinite alternate; }
+    @keyframes hw-headbang { 0% { transform: rotate(-12deg); } 100% { transform: rotate(12deg); } }
+
+    /* =========================================================================
+       HELLO CHAT — scoped under #hc-panel
+       ========================================================================= */
+    #hc-panel {
+      background: #1a1410; color: #e8dcc8; font-family: 'Inter', sans-serif;
+      --hc-bg-deep: #1a1410; --hc-bg-panel: #231e18; --hc-bg-chat: #2a2319;
+      --hc-bg-user: #3d3427; --hc-bg-input: #2f2820; --hc-border: #3e362a;
+      --hc-border-focus: #7a6544; --hc-text: #e8dcc8; --hc-text-dim: #9a8b73;
+      --hc-text-faint: #6b5e4b; --hc-accent: #c9a45c; --hc-accent-glow: #c9a45c44;
+      --hc-green-dot: #7dba6a;
+    }
+    #hc-panel .hc-layout { display: flex; height: 100%; }
+    #hc-panel .hc-sidebar {
+      width: 260px; background: var(--hc-bg-panel); border-right: 1px solid var(--hc-border);
+      display: flex; flex-direction: column; padding: 1.2rem; flex-shrink: 0;
+    }
+    @media (max-width: 700px) { #hc-panel .hc-sidebar { display: none; } }
+    #hc-panel .hc-brand { font-family: 'Playfair Display', serif; font-size: 1.35rem; font-weight: 700; color: var(--hc-accent); margin-bottom: .25rem; letter-spacing: .5px; }
+    #hc-panel .hc-tagline { font-family: 'Playfair Display', serif; font-style: italic; font-size: .8rem; color: var(--hc-text-dim); margin-bottom: 1.8rem; }
+    #hc-panel .hc-new-btn {
+      display: flex; align-items: center; gap: .5rem; padding: .7rem 1rem;
+      background: transparent; border: 1px dashed var(--hc-border); border-radius: 8px;
+      color: var(--hc-text-dim); font-family: 'Inter', sans-serif; font-size: .85rem;
+      cursor: pointer; transition: border-color .2s, color .2s; margin-bottom: 1.5rem;
+    }
+    #hc-panel .hc-new-btn:hover { border-color: var(--hc-accent); color: var(--hc-accent); }
+    #hc-panel .hc-new-btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; }
+    #hc-panel .hc-session-label { font-size: .65rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--hc-text-faint); margin-bottom: .6rem; }
+    #hc-panel .hc-session-item { padding: .55rem .8rem; border-radius: 6px; font-size: .82rem; color: var(--hc-text-dim); cursor: default; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: var(--hc-bg-user); margin-bottom: .35rem; }
+    #hc-panel .hc-sidebar-footer { margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--hc-border); display: flex; align-items: center; gap: .6rem; }
+    #hc-panel .hc-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--hc-accent); display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-weight: 700; font-size: .85rem; color: var(--hc-bg-deep); }
+    #hc-panel .hc-footer-name { font-size: .82rem; color: var(--hc-text-dim); }
+
+    #hc-panel .hc-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    #hc-panel .hc-header {
+      padding: .8rem 1.4rem; border-bottom: 1px solid var(--hc-border);
+      display: flex; align-items: center; gap: .6rem; background: var(--hc-bg-panel);
+    }
+    #hc-panel .hc-header-model { font-family: 'Playfair Display', serif; font-weight: 600; font-size: 1rem; color: var(--hc-text); }
+    #hc-panel .hc-header-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--hc-green-dot); box-shadow: 0 0 6px var(--hc-green-dot); }
+    #hc-panel .hc-header-status { font-size: .75rem; color: var(--hc-text-dim); }
+
+    #hc-panel .hc-messages { flex: 1; overflow-y: auto; padding: 1.5rem 0; scroll-behavior: smooth; }
+    #hc-panel .hc-messages::-webkit-scrollbar { width: 6px; }
+    #hc-panel .hc-messages::-webkit-scrollbar-thumb { background: var(--hc-border); border-radius: 3px; }
+    #hc-panel .hc-msg-row {
+      padding: .9rem 1.4rem; display: flex; gap: .9rem; max-width: 820px;
+      margin: 0 auto; animation: hc-fadeUp .35s ease-out;
+    }
+    @keyframes hc-fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    #hc-panel .hc-msg-row.user { background: var(--hc-bg-user); border-radius: 12px; margin-bottom: .35rem; }
+    #hc-panel .hc-msg-row.assistant { margin-bottom: .35rem; }
+    #hc-panel .hc-msg-icon { width: 30px; height: 30px; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: .85rem; margin-top: 2px; }
+    #hc-panel .hc-msg-row.user .hc-msg-icon { background: var(--hc-accent); color: var(--hc-bg-deep); font-family: 'Playfair Display', serif; font-weight: 700; }
+    #hc-panel .hc-msg-row.assistant .hc-msg-icon { background: linear-gradient(135deg, #6b5e4b, #8a7456); color: #f0e6d0; }
+    #hc-panel .hc-msg-body { font-size: .92rem; line-height: 1.65; color: var(--hc-text); padding-top: 3px; }
+    #hc-panel .hc-typing-dots { display: inline-flex; gap: 4px; padding: 6px 0; }
+    #hc-panel .hc-typing-dots span { width: 7px; height: 7px; background: var(--hc-text-dim); border-radius: 50%; animation: hc-bounce .9s ease-in-out infinite; }
+    #hc-panel .hc-typing-dots span:nth-child(2) { animation-delay: .15s; }
+    #hc-panel .hc-typing-dots span:nth-child(3) { animation-delay: .3s; }
+    @keyframes hc-bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
+
+    #hc-panel .hc-welcome { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2rem; }
+    #hc-panel .hc-welcome-icon { font-size: 2.8rem; margin-bottom: 1rem; opacity: .7; }
+    #hc-panel .hc-welcome h2 { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 700; color: var(--hc-accent); margin-bottom: .4rem; }
+    #hc-panel .hc-welcome p { font-size: .88rem; color: var(--hc-text-dim); max-width: 380px; line-height: 1.6; }
+
+    #hc-panel .hc-input-area { padding: .8rem 1.4rem 1.2rem; border-top: 1px solid var(--hc-border); background: var(--hc-bg-panel); }
+    #hc-panel .hc-input-wrap {
+      max-width: 780px; margin: 0 auto; display: flex; align-items: flex-end; gap: .6rem;
+      background: var(--hc-bg-input); border: 1px solid var(--hc-border); border-radius: 14px;
+      padding: .55rem .7rem; transition: border-color .2s, box-shadow .2s;
+    }
+    #hc-panel .hc-input-wrap:focus-within { border-color: var(--hc-border-focus); box-shadow: 0 0 0 3px var(--hc-accent-glow); }
+    #hc-panel .hc-input-wrap textarea {
+      flex: 1; background: none; border: none; color: var(--hc-text); font-family: 'Inter', sans-serif;
+      font-size: .9rem; line-height: 1.5; resize: none; outline: none; max-height: 150px; padding: .3rem .2rem;
+    }
+    #hc-panel .hc-input-wrap textarea::placeholder { color: var(--hc-text-faint); }
+    #hc-panel .hc-send-btn {
+      width: 34px; height: 34px; border-radius: 8px; border: none; background: var(--hc-accent);
+      color: var(--hc-bg-deep); cursor: pointer; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: opacity .2s, transform .1s;
+    }
+    #hc-panel .hc-send-btn:disabled { opacity: .3; cursor: default; }
+    #hc-panel .hc-send-btn:not(:disabled):hover { transform: scale(1.06); }
+    #hc-panel .hc-send-btn svg { width: 16px; height: 16px; fill: currentColor; }
+    #hc-panel .hc-input-hint { text-align: center; font-size: .68rem; color: var(--hc-text-faint); margin-top: .45rem; }
+
+    /* =========================================================================
+       HELLO HUME — scoped under #hh-panel
+       ========================================================================= */
+    #hh-panel {
+      background: #0d0a1a; color: #f0eaff; font-family: 'Outfit', sans-serif;
+      --hh-bg-deep: #0d0a1a; --hh-bg-panel: #13102a; --hh-bg-card: #1a1535;
+      --hh-bg-input: #1f1940; --hh-bg-user: #261e4a; --hh-border: #2e2555;
+      --hh-border-focus: #b44dff; --hh-text: #f0eaff; --hh-text-dim: #9a8cc0;
+      --hh-text-faint: #5e5280; --hh-pink: #ff47a0; --hh-purple: #b44dff;
+      --hh-blue: #47b0ff; --hh-cyan: #00e5cc; --hh-yellow: #ffe14d;
+      --hh-red: #ff4d6a; --hh-green: #47ffa0;
+      --hh-gradient-main: linear-gradient(135deg, #ff47a0, #b44dff, #47b0ff);
+      --hh-gradient-warm: linear-gradient(135deg, #ff47a0, #ff8c47);
+      --hh-gradient-cool: linear-gradient(135deg, #b44dff, #47b0ff);
+      --hh-gradient-ev: linear-gradient(135deg, #ff47a0, #b44dff);
+      --hh-glow-pink: rgba(255, 71, 160, .25);
+      --hh-glow-purple: rgba(180, 77, 255, .2);
+    }
+    /* Animated background blobs */
+    #hh-panel::before, #hh-panel::after {
+      content: ''; position: absolute; border-radius: 50%; pointer-events: none; z-index: 0; filter: blur(100px);
+    }
+    #hh-panel::before {
+      width: 500px; height: 500px; background: var(--hh-glow-pink);
+      top: -100px; left: -100px; animation: hh-blobDrift 12s ease-in-out infinite alternate;
+    }
+    #hh-panel::after {
+      width: 400px; height: 400px; background: var(--hh-glow-purple);
+      bottom: -80px; right: -80px; animation: hh-blobDrift 10s ease-in-out infinite alternate-reverse;
+    }
+    @keyframes hh-blobDrift {
+      0% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(60px, 40px) scale(1.15); }
+      100% { transform: translate(-30px, 70px) scale(.95); }
+    }
+
+    #hh-panel .hh-layout { display: flex; height: 100%; position: relative; z-index: 1; }
+    #hh-panel .hh-sidebar {
+      width: 290px; background: var(--hh-bg-panel); border-right: 1px solid var(--hh-border);
+      display: flex; flex-direction: column; flex-shrink: 0; overflow: hidden; backdrop-filter: blur(20px);
+    }
+    @media (max-width: 800px) { #hh-panel .hh-sidebar { display: none; } }
+
+    #hh-panel .hh-sidebar-header {
+      padding: 1.4rem 1.3rem 1.1rem; border-bottom: 1px solid var(--hh-border); position: relative; overflow: hidden;
+    }
+    #hh-panel .hh-sidebar-header::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: var(--hh-gradient-main); }
+    #hh-panel .hh-brand {
+      font-size: 1.35rem; font-weight: 800; letter-spacing: -.5px;
+      background: var(--hh-gradient-main); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    #hh-panel .hh-tagline { font-size: .72rem; color: var(--hh-text-dim); margin-top: .15rem; letter-spacing: .5px; }
+
+    #hh-panel .hh-cred { padding: 1.1rem 1.3rem; flex: 1; overflow-y: auto; }
+    #hh-panel .hh-cred::-webkit-scrollbar { width: 4px; }
+    #hh-panel .hh-cred::-webkit-scrollbar-thumb { background: var(--hh-border); border-radius: 2px; }
+    #hh-panel .hh-cred-title { font-size: .65rem; text-transform: uppercase; letter-spacing: 2px; color: var(--hh-pink); font-weight: 600; margin-bottom: .9rem; }
+    #hh-panel .hh-cred-group { margin-bottom: .9rem; }
+    #hh-panel .hh-cred-label { display: block; font-size: .72rem; font-weight: 600; color: var(--hh-text-dim); margin-bottom: .3rem; letter-spacing: .3px; }
+    #hh-panel .hh-cred-input {
+      width: 100%; padding: .55rem .7rem; background: var(--hh-bg-input); border: 1px solid var(--hh-border);
+      border-radius: 10px; color: var(--hh-text); font-family: 'JetBrains Mono', monospace; font-size: .72rem;
+      outline: none; transition: border-color .2s, box-shadow .2s;
+    }
+    #hh-panel .hh-cred-input::placeholder { color: var(--hh-text-faint); }
+    #hh-panel .hh-cred-input:focus { border-color: var(--hh-purple); box-shadow: 0 0 0 3px rgba(180, 77, 255, .15), 0 0 20px rgba(180, 77, 255, .08); }
+
+    #hh-panel .hh-connect-btn {
+      width: 100%; padding: .7rem; margin-top: .5rem; border: none; border-radius: 12px;
+      font-family: 'Outfit', sans-serif; font-weight: 700; font-size: .88rem; letter-spacing: .3px;
+      cursor: pointer; transition: transform .15s, box-shadow .2s; position: relative; overflow: hidden;
+    }
+    #hh-panel .hh-connect-btn:active { transform: scale(.97); }
+    #hh-panel .hh-connect-btn.primary { background: var(--hh-gradient-main); color: #fff; box-shadow: 0 4px 20px var(--hh-glow-pink); }
+    #hh-panel .hh-connect-btn.primary:hover { box-shadow: 0 6px 30px var(--hh-glow-pink), 0 0 40px rgba(180, 77, 255, .2); transform: translateY(-1px); }
+    #hh-panel .hh-connect-btn.danger { background: var(--hh-gradient-warm); color: #fff; box-shadow: 0 4px 15px rgba(255, 71, 100, .3); }
+    #hh-panel .hh-connect-btn:disabled { opacity: .4; cursor: default; transform: none; }
+
+    #hh-panel .hh-status-bar { margin-top: .8rem; display: flex; align-items: center; gap: .5rem; font-size: .75rem; }
+    #hh-panel .hh-status-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    #hh-panel .hh-status-dot.off { background: var(--hh-text-faint); }
+    #hh-panel .hh-status-dot.wait { background: var(--hh-yellow); animation: hh-pulse 1s infinite; box-shadow: 0 0 8px rgba(255, 225, 77, .5); }
+    #hh-panel .hh-status-dot.on { background: var(--hh-green); box-shadow: 0 0 10px rgba(71, 255, 160, .5); }
+    #hh-panel .hh-status-dot.err { background: var(--hh-red); box-shadow: 0 0 8px rgba(255, 77, 106, .5); }
+    @keyframes hh-pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+    #hh-panel .hh-status-text { color: var(--hh-text-dim); font-weight: 500; }
+
+    #hh-panel .hh-audio-toggle { margin-top: 1.1rem; padding-top: .9rem; border-top: 1px solid var(--hh-border); display: flex; align-items: center; justify-content: space-between; }
+    #hh-panel .hh-audio-toggle-label { font-size: .78rem; color: var(--hh-text-dim); font-weight: 500; }
+    #hh-panel .hh-toggle-switch {
+      position: relative; width: 42px; height: 22px; background: var(--hh-border);
+      border-radius: 11px; cursor: pointer; transition: background .25s;
+    }
+    #hh-panel .hh-toggle-switch.on { background: var(--hh-gradient-cool); box-shadow: 0 0 12px rgba(71, 176, 255, .3); }
+    #hh-panel .hh-toggle-switch .knob {
+      position: absolute; top: 2px; left: 2px; width: 18px; height: 18px;
+      background: #fff; border-radius: 50%; transition: left .25s; box-shadow: 0 1px 4px rgba(0,0,0,.3);
+    }
+    #hh-panel .hh-toggle-switch.on .knob { left: 22px; }
+    #hh-panel .hh-sidebar-footer {
+      padding: .9rem 1.3rem; border-top: 1px solid var(--hh-border); font-size: .62rem;
+      color: var(--hh-text-faint); text-align: center; letter-spacing: .5px; text-transform: uppercase;
+    }
+
+    #hh-panel .hh-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    #hh-panel .hh-header {
+      padding: .8rem 1.5rem; border-bottom: 1px solid var(--hh-border); background: var(--hh-bg-panel);
+      display: flex; align-items: center; gap: .7rem; backdrop-filter: blur(20px);
+    }
+    #hh-panel .hh-header-avatar {
+      width: 32px; height: 32px; border-radius: 50%; background: var(--hh-gradient-ev);
+      display: flex; align-items: center; justify-content: center; font-size: .7rem; font-weight: 800;
+      color: #fff; box-shadow: 0 0 12px var(--hh-glow-pink); flex-shrink: 0;
+    }
+    #hh-panel .hh-header-info { flex: 1; }
+    #hh-panel .hh-header-title { font-weight: 700; font-size: .95rem; letter-spacing: -.2px; }
+    #hh-panel .hh-header-subtitle { font-size: .65rem; color: var(--hh-text-faint); letter-spacing: .3px; }
+
+    #hh-panel .hh-messages { flex: 1; overflow-y: auto; padding: 1.2rem 0; scroll-behavior: smooth; }
+    #hh-panel .hh-messages::-webkit-scrollbar { width: 5px; }
+    #hh-panel .hh-messages::-webkit-scrollbar-thumb { background: var(--hh-border); border-radius: 3px; }
+    #hh-panel .hh-msg-row {
+      padding: .9rem 1.5rem; display: flex; gap: .8rem; max-width: 860px;
+      margin: 0 auto .3rem; animation: hh-msgPop .35s cubic-bezier(.17,.67,.35,1.1);
+    }
+    @keyframes hh-msgPop { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    #hh-panel .hh-msg-row.user { background: var(--hh-bg-user); border-radius: 16px; border: 1px solid rgba(180, 77, 255, .1); }
+    #hh-panel .hh-msg-row.error { background: rgba(255, 77, 106, .08); border-radius: 16px; border: 1px solid rgba(255, 77, 106, .15); }
+    #hh-panel .hh-msg-icon {
+      width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; font-size: .7rem; font-weight: 800; margin-top: 2px;
+    }
+    #hh-panel .hh-msg-row.user .hh-msg-icon { background: var(--hh-gradient-cool); color: #fff; box-shadow: 0 0 10px rgba(71, 176, 255, .2); }
+    #hh-panel .hh-msg-row.assistant .hh-msg-icon { background: var(--hh-gradient-ev); color: #fff; box-shadow: 0 0 10px var(--hh-glow-pink); }
+    #hh-panel .hh-msg-row.error .hh-msg-icon { background: var(--hh-red); color: #fff; }
+    #hh-panel .hh-msg-content { flex: 1; min-width: 0; }
+    #hh-panel .hh-msg-body { font-size: .9rem; line-height: 1.7; color: var(--hh-text); }
+
+    #hh-panel .hh-msg-audio-btn {
+      display: inline-flex; align-items: center; gap: .4rem; margin-top: .5rem;
+      padding: .35rem .8rem; background: linear-gradient(135deg, rgba(180, 77, 255, .12), rgba(71, 176, 255, .12));
+      border: 1px solid rgba(180, 77, 255, .3); border-radius: 20px; color: var(--hh-purple);
+      font-family: 'Outfit', sans-serif; font-size: .7rem; font-weight: 600; cursor: pointer;
+      transition: background .2s, border-color .2s, transform .1s;
+    }
+    #hh-panel .hh-msg-audio-btn:hover { background: linear-gradient(135deg, rgba(180, 77, 255, .2), rgba(71, 176, 255, .2)); border-color: var(--hh-purple); transform: scale(1.03); }
+    #hh-panel .hh-msg-audio-btn svg { width: 12px; height: 12px; fill: currentColor; }
+
+    #hh-panel .hh-typing-dots { display: inline-flex; gap: 5px; padding: 8px 0; }
+    #hh-panel .hh-typing-dots span { width: 8px; height: 8px; border-radius: 50%; animation: hh-dotPulse .9s ease-in-out infinite; }
+    #hh-panel .hh-typing-dots span:nth-child(1) { background: var(--hh-pink); }
+    #hh-panel .hh-typing-dots span:nth-child(2) { background: var(--hh-purple); animation-delay: .15s; }
+    #hh-panel .hh-typing-dots span:nth-child(3) { background: var(--hh-blue); animation-delay: .3s; }
+    @keyframes hh-dotPulse { 0%,60%,100% { transform: translateY(0) scale(1); opacity: .4; } 30% { transform: translateY(-6px) scale(1.2); opacity: 1; } }
+
+    #hh-panel .hh-welcome { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2rem; }
+    #hh-panel .hh-welcome-avatar {
+      width: 72px; height: 72px; border-radius: 50%; background: var(--hh-gradient-main);
+      display: flex; align-items: center; justify-content: center; font-size: 1.8rem; margin-bottom: 1.2rem;
+      box-shadow: 0 0 40px var(--hh-glow-pink), 0 0 80px var(--hh-glow-purple);
+      animation: hh-welcomeGlow 3s ease-in-out infinite alternate; font-weight: 800; color: #fff;
+    }
+    @keyframes hh-welcomeGlow {
+      from { box-shadow: 0 0 40px var(--hh-glow-pink), 0 0 80px var(--hh-glow-purple); }
+      to { box-shadow: 0 0 60px var(--hh-glow-pink), 0 0 100px var(--hh-glow-purple); }
+    }
+    #hh-panel .hh-welcome h2 {
+      font-size: 1.6rem; font-weight: 800; margin-bottom: .3rem;
+      background: var(--hh-gradient-main); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    #hh-panel .hh-welcome .hh-welcome-sub { font-size: .92rem; color: var(--hh-text-dim); margin-bottom: .6rem; font-weight: 500; }
+    #hh-panel .hh-welcome p { font-size: .82rem; color: var(--hh-text-faint); max-width: 400px; line-height: 1.6; }
+    #hh-panel .hh-welcome-chips { display: flex; gap: .5rem; margin-top: 1.2rem; flex-wrap: wrap; justify-content: center; }
+    #hh-panel .hh-chip { padding: .3rem .75rem; border-radius: 20px; font-size: .68rem; font-weight: 600; letter-spacing: .3px; border: 1px solid; }
+    #hh-panel .hh-chip.aws { color: var(--hh-yellow); border-color: rgba(255, 225, 77, .25); background: rgba(255, 225, 77, .06); }
+    #hh-panel .hh-chip.k8s { color: var(--hh-blue); border-color: rgba(71, 176, 255, .25); background: rgba(71, 176, 255, .06); }
+    #hh-panel .hh-chip.devops { color: var(--hh-pink); border-color: rgba(255, 71, 160, .25); background: rgba(255, 71, 160, .06); }
+    #hh-panel .hh-chip.net { color: var(--hh-cyan); border-color: rgba(0, 229, 204, .25); background: rgba(0, 229, 204, .06); }
+
+    #hh-panel .hh-input-area { padding: .7rem 1.5rem 1rem; border-top: 1px solid var(--hh-border); background: var(--hh-bg-panel); backdrop-filter: blur(20px); }
+    #hh-panel .hh-input-wrap {
+      max-width: 800px; margin: 0 auto; display: flex; align-items: flex-end; gap: .5rem;
+      background: var(--hh-bg-input); border: 1px solid var(--hh-border); border-radius: 16px;
+      padding: .55rem .7rem; transition: border-color .25s, box-shadow .25s;
+    }
+    #hh-panel .hh-input-wrap:focus-within { border-color: var(--hh-purple); box-shadow: 0 0 0 3px rgba(180, 77, 255, .12), 0 0 30px rgba(180, 77, 255, .06); }
+    #hh-panel .hh-input-wrap textarea {
+      flex: 1; background: none; border: none; color: var(--hh-text); font-family: 'Outfit', sans-serif;
+      font-size: .88rem; line-height: 1.5; resize: none; outline: none; max-height: 140px; padding: .3rem .2rem;
+    }
+    #hh-panel .hh-input-wrap textarea::placeholder { color: var(--hh-text-faint); }
+    #hh-panel .hh-send-btn {
+      width: 36px; height: 36px; border-radius: 50%; border: none; background: var(--hh-gradient-main);
+      color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: transform .15s, box-shadow .2s; box-shadow: 0 2px 10px var(--hh-glow-pink);
+    }
+    #hh-panel .hh-send-btn:disabled { opacity: .2; cursor: default; box-shadow: none; }
+    #hh-panel .hh-send-btn:not(:disabled):hover { transform: scale(1.08); box-shadow: 0 4px 20px var(--hh-glow-pink); }
+    #hh-panel .hh-send-btn svg { width: 15px; height: 15px; fill: currentColor; }
+    #hh-panel .hh-input-hint { text-align: center; font-size: .65rem; color: var(--hh-text-faint); margin-top: .45rem; }
+  </style>
+</head>
+<body>
+
+<div class="shell">
+
+  <nav class="topbar">
+    <a class="back-btn" href="/">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      Directory
+    </a>
+    <div class="topbar-sep"></div>
+    <div class="tabs">
+      <button class="tab" data-app="hw">
+        <span class="dot" style="background:#e05a33"></span>Hello World
+      </button>
+      <button class="tab" data-app="hc">
+        <span class="dot" style="background:#6b5bff"></span>Hello Chat!
+      </button>
+      <button class="tab" data-app="hh">
+        <span class="dot" style="background:#d0218c"></span>Hello Hume!
+      </button>
+    </div>
+  </nav>
+
+  <div class="content" id="content">
+
+    <!-- Shell welcome -->
+    <div class="shell-welcome" id="shellWelcome">
+      <div class="shell-welcome-icon">👋</div>
+      <h2>Hello Apps</h2>
+      <p>Pick a tab above to launch one of the Hello series apps. Each runs independently — switch between them at any time.</p>
+    </div>
+
+    <!-- ==================== HELLO WORLD ==================== -->
+    <div class="panel" id="hw-panel">
+      <div class="hw-stars" id="hw-stars"></div>
+      <div class="hw-container">
+        <h1 class="hw-title">Wayne's World</h1>
+        <p class="hw-subtitle">Party time! Excellent!</p>
+        <button class="hw-btn" id="hw-partyBtn">
+          <span class="hw-guitar">🎸</span> Party On! <span class="hw-guitar">🎸</span>
+        </button>
+        <div class="hw-msg" id="hw-messageArea">
+          <p class="hw-hello">Hello, World!</p>
+          <p class="hw-party">Schwing! We're not worthy! 🤘</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== HELLO CHAT ==================== -->
+    <div class="panel" id="hc-panel">
+      <div class="hc-layout">
+        <aside class="hc-sidebar">
+          <div class="hc-brand">Hello Chat!</div>
+          <div class="hc-tagline">"Tell me more about that..."</div>
+          <button class="hc-new-btn" id="hc-newChatBtn">
+            <svg viewBox="0 0 24 24" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            New session
+          </button>
+          <div class="hc-session-label">Today</div>
+          <div class="hc-session-item" id="hc-sessionTitle">New conversation</div>
+          <div class="hc-sidebar-footer">
+            <div class="hc-avatar">P</div>
+            <span class="hc-footer-name">Patient</span>
+          </div>
+        </aside>
+        <div class="hc-main">
+          <div class="hc-header">
+            <span class="hc-header-model">Dr. Chat</span>
+            <span class="hc-header-dot"></span>
+            <span class="hc-header-status">In session</span>
+          </div>
+          <div class="hc-messages" id="hc-messages">
+            <div class="hc-welcome" id="hc-welcome">
+              <div class="hc-welcome-icon">🛋️</div>
+              <h2>Welcome to Hello Chat!</h2>
+              <p>Take a seat on the virtual couch. Dr. Chat is ready to listen — in a manner of speaking. Go ahead, say anything.</p>
+            </div>
+          </div>
+          <div class="hc-input-area">
+            <div class="hc-input-wrap">
+              <textarea id="hc-userInput" rows="1" placeholder="Message Dr. Chat..." autofocus></textarea>
+              <button class="hc-send-btn" id="hc-sendBtn" disabled>
+                <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+              </button>
+            </div>
+            <div class="hc-input-hint">Dr. Chat may deflect your questions. This is by design.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== HELLO HUME ==================== -->
+    <div class="panel" id="hh-panel">
+      <div class="hh-layout">
+        <aside class="hh-sidebar">
+          <div class="hh-sidebar-header">
+            <div class="hh-brand">Hello Hume!</div>
+            <div class="hh-tagline">cloud support, but make it slay</div>
+          </div>
+          <div class="hh-cred">
+            <div class="hh-cred-title">Plug In</div>
+            <div class="hh-cred-group">
+              <label class="hh-cred-label" for="hh-apiKey">API Key</label>
+              <input class="hh-cred-input" id="hh-apiKey" type="password" placeholder="your-api-key" autocomplete="off">
+            </div>
+            <div class="hh-cred-group">
+              <label class="hh-cred-label" for="hh-secretKey">Secret Key</label>
+              <input class="hh-cred-input" id="hh-secretKey" type="password" placeholder="your-secret-key" autocomplete="off">
+            </div>
+            <div class="hh-cred-group">
+              <label class="hh-cred-label" for="hh-configId">Config ID</label>
+              <input class="hh-cred-input" id="hh-configId" type="text" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" autocomplete="off">
+            </div>
+            <button class="hh-connect-btn primary" id="hh-connectBtn">Let's Go</button>
+            <div class="hh-status-bar">
+              <span class="hh-status-dot off" id="hh-statusDot"></span>
+              <span class="hh-status-text" id="hh-statusText">Disconnected</span>
+            </div>
+            <div class="hh-audio-toggle">
+              <span class="hh-audio-toggle-label">Voice vibes</span>
+              <div class="hh-toggle-switch on" id="hh-audioToggle">
+                <div class="knob"></div>
+              </div>
+            </div>
+          </div>
+          <div class="hh-sidebar-footer">Powered by Hume AI &middot; EVI</div>
+        </aside>
+        <div class="hh-main">
+          <div class="hh-header">
+            <div class="hh-header-avatar">EV</div>
+            <div class="hh-header-info">
+              <div class="hh-header-title">EV &mdash; Cloud Support</div>
+              <div class="hh-header-subtitle">your fave infra girlie, no cap</div>
+            </div>
+          </div>
+          <div class="hh-messages" id="hh-messages">
+            <div class="hh-welcome" id="hh-welcome">
+              <div class="hh-welcome-avatar">EV</div>
+              <h2>Hello Hume!</h2>
+              <div class="hh-welcome-sub">cloud support that understood the assignment</div>
+              <p>Drop your Hume API creds in the sidebar and connect. EV is ready to debug your infra and absolutely slay while doing it.</p>
+              <div class="hh-welcome-chips">
+                <span class="hh-chip aws">AWS</span>
+                <span class="hh-chip k8s">Kubernetes</span>
+                <span class="hh-chip devops">CI/CD</span>
+                <span class="hh-chip net">Networking</span>
+              </div>
+            </div>
+          </div>
+          <div class="hh-input-area">
+            <div class="hh-input-wrap">
+              <textarea id="hh-userInput" rows="1" maxlength="256" placeholder="describe your infra drama..." disabled></textarea>
+              <button class="hh-send-btn" id="hh-sendBtn" disabled>
+                <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+              </button>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;max-width:800px;margin:0 auto;">
+              <div class="hh-input-hint" id="hh-inputHint">connect to start vibing</div>
+              <div class="hh-input-hint" id="hh-charCount" style="white-space:nowrap;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===================================================================
+     SCRIPTS
+     =================================================================== -->
+
+<!-- Tab switching -->
+<script>
+(function () {
+  const tabs = document.querySelectorAll('.tab[data-app]');
+  const panels = { hw: document.getElementById('hw-panel'), hc: document.getElementById('hc-panel'), hh: document.getElementById('hh-panel') };
+  const welcome = document.getElementById('shellWelcome');
+  let active = null;
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const id = tab.dataset.app;
+      if (id === active) return;
+      active = id;
+      welcome.classList.add('hidden');
+      tabs.forEach(t => t.classList.toggle('active', t.dataset.app === id));
+      Object.entries(panels).forEach(([key, el]) => el.classList.toggle('visible', key === id));
+    });
+  });
+})();
+</script>
+
+<!-- Hello World logic -->
+<script>
+(function () {
+  // Generate starfield
+  const container = document.getElementById('hw-stars');
+  for (let i = 0; i < 120; i++) {
+    const star = document.createElement('span');
+    star.style.left = Math.random() * 100 + '%';
+    star.style.top = Math.random() * 100 + '%';
+    star.style.width = star.style.height = (Math.random() * 2 + 1) + 'px';
+    star.style.animationDelay = (Math.random() * 3) + 's';
+    star.style.animationDuration = (Math.random() * 2 + 2) + 's';
+    container.appendChild(star);
+  }
+  // Button click reveals message
+  document.getElementById('hw-partyBtn').addEventListener('click', function () {
+    document.getElementById('hw-messageArea').classList.add('visible');
+  });
+})();
+</script>
+
+<!-- Hello Chat logic -->
+<script>
+(function () {
+  const REPLY = "And why would you ask me that?";
+
+  const messagesEl   = document.getElementById('hc-messages');
+  const welcomeEl    = document.getElementById('hc-welcome');
+  const inputEl      = document.getElementById('hc-userInput');
+  const sendBtn      = document.getElementById('hc-sendBtn');
+  const sessionTitle = document.getElementById('hc-sessionTitle');
+  const newChatBtn   = document.getElementById('hc-newChatBtn');
+
+  let firstMessage = true;
+  let busy = false;
+
+  inputEl.addEventListener('input', () => {
+    inputEl.style.height = 'auto';
+    inputEl.style.height = Math.min(inputEl.scrollHeight, 150) + 'px';
+    sendBtn.disabled = !inputEl.value.trim();
+  });
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+  });
+  sendBtn.addEventListener('click', handleSend);
+  newChatBtn.addEventListener('click', resetChat);
+
+  function handleSend() {
+    const text = inputEl.value.trim();
+    if (!text || busy) return;
+    if (firstMessage) {
+      welcomeEl.style.display = 'none';
+      sessionTitle.textContent = text.length > 32 ? text.slice(0, 32) + '…' : text;
+      firstMessage = false;
+    }
+    appendMessage('user', text);
+    inputEl.value = '';
+    inputEl.style.height = 'auto';
+    sendBtn.disabled = true;
+    busy = true;
+    const typingRow = createTypingIndicator();
+    messagesEl.appendChild(typingRow);
+    scrollToBottom();
+    const delay = 800 + Math.random() * 800;
+    setTimeout(() => {
+      typingRow.remove();
+      appendMessage('assistant', REPLY);
+      busy = false;
+      inputEl.focus();
+    }, delay);
+  }
+
+  function appendMessage(role, text) {
+    const row = document.createElement('div');
+    row.className = 'hc-msg-row ' + role;
+    const icon = document.createElement('div');
+    icon.className = 'hc-msg-icon';
+    icon.textContent = role === 'user' ? 'P' : '🪶';
+    const body = document.createElement('div');
+    body.className = 'hc-msg-body';
+    body.textContent = text;
+    row.appendChild(icon);
+    row.appendChild(body);
+    messagesEl.appendChild(row);
+    scrollToBottom();
+  }
+
+  function createTypingIndicator() {
+    const row = document.createElement('div');
+    row.className = 'hc-msg-row assistant';
+    const icon = document.createElement('div');
+    icon.className = 'hc-msg-icon';
+    icon.textContent = '🪶';
+    const dots = document.createElement('div');
+    dots.className = 'hc-typing-dots';
+    dots.innerHTML = '<span></span><span></span><span></span>';
+    row.appendChild(icon);
+    row.appendChild(dots);
+    return row;
+  }
+
+  function scrollToBottom() { messagesEl.scrollTop = messagesEl.scrollHeight; }
+
+  function resetChat() {
+    while (messagesEl.firstChild) messagesEl.removeChild(messagesEl.firstChild);
+    const w = document.createElement('div');
+    w.className = 'hc-welcome';
+    w.id = 'hc-welcome';
+    w.innerHTML = '<div class="hc-welcome-icon">🛋️</div><h2>Welcome to Hello Chat!</h2><p>Take a seat on the virtual couch. Dr. Chat is ready to listen — in a manner of speaking. Go ahead, say anything.</p>';
+    messagesEl.appendChild(w);
+    sessionTitle.textContent = 'New conversation';
+    firstMessage = true;
+    busy = false;
+    inputEl.value = '';
+    inputEl.style.height = 'auto';
+    sendBtn.disabled = true;
+    inputEl.focus();
+  }
+})();
+</script>
+
+<!-- Hello Hume logic -->
+<script>
+(function () {
+  /* DOM refs */
+  const apiKeyInput    = document.getElementById('hh-apiKey');
+  const secretKeyInput = document.getElementById('hh-secretKey');
+  const configIdInput  = document.getElementById('hh-configId');
+  const connectBtn     = document.getElementById('hh-connectBtn');
+  const statusDot      = document.getElementById('hh-statusDot');
+  const statusText     = document.getElementById('hh-statusText');
+  const audioToggle    = document.getElementById('hh-audioToggle');
+  const messagesEl     = document.getElementById('hh-messages');
+  const welcomeEl      = document.getElementById('hh-welcome');
+  const userInput      = document.getElementById('hh-userInput');
+  const sendBtn        = document.getElementById('hh-sendBtn');
+  const inputHint      = document.getElementById('hh-inputHint');
+  const charCount      = document.getElementById('hh-charCount');
+
+  const MAX_CHARS = 256;
+
+  /* State */
+  let ws = null, connected = false, busy = false, audioEnabled = true, firstMsg = true;
+  let audioQueue = [], isPlaying = false, currentAudio = null;
+  let turnAudioChunks = [], currentAssistantRow = null;
+  let userHasSpoken = false, botInitiationCount = 0;
+  const MAX_BOT_INITIATIONS = 2;
+
+  /* Audio toggle */
+  audioToggle.addEventListener('click', () => {
+    audioEnabled = !audioEnabled;
+    audioToggle.classList.toggle('on', audioEnabled);
+    if (!audioEnabled) stopAudioPlayback();
+  });
+
+  /* Char count & resize */
+  function updateCharCount() {
+    const len = userInput.value.length;
+    const remaining = MAX_CHARS - len;
+    if (len === 0) { charCount.textContent = ''; return; }
+    charCount.textContent = remaining + ' / ' + MAX_CHARS;
+    charCount.style.color = remaining <= 20 ? 'var(--hh-red)' : 'var(--hh-text-faint)';
+  }
+  userInput.addEventListener('input', () => {
+    if (userInput.value.length > MAX_CHARS) userInput.value = userInput.value.slice(0, MAX_CHARS);
+    userInput.style.height = 'auto';
+    userInput.style.height = Math.min(userInput.scrollHeight, 140) + 'px';
+    sendBtn.disabled = !userInput.value.trim() || !connected;
+    updateCharCount();
+  });
+  userInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+  });
+  sendBtn.addEventListener('click', handleSend);
+
+  /* Connect / Disconnect */
+  connectBtn.addEventListener('click', () => {
+    if (connected) { disconnectWs(); return; }
+    startConnection();
+  });
+
+  async function startConnection() {
+    const apiKey = apiKeyInput.value.trim();
+    const secret = secretKeyInput.value.trim();
+    const configId = configIdInput.value.trim();
+    if (!apiKey || !secret) { setStatus('err', 'API Key and Secret Key required'); return; }
+    setStatus('wait', 'getting access token...');
+    connectBtn.disabled = true;
+    try {
+      const token = await getAccessToken(apiKey, secret);
+      openWebSocket(token, configId);
+    } catch (err) {
+      setStatus('err', 'auth failed: ' + err.message);
+      connectBtn.disabled = false;
+    }
+  }
+
+  async function getAccessToken(apiKey, secret) {
+    const creds = btoa(apiKey + ':' + secret);
+    const res = await fetch('https://api.hume.ai/oauth2-cc/token', {
+      method: 'POST',
+      headers: { 'Authorization': 'Basic ' + creds, 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'grant_type=client_credentials',
+    });
+    if (!res.ok) { const body = await res.text(); throw new Error(res.status + ' ' + body.slice(0, 120)); }
+    const data = await res.json();
+    return data.access_token;
+  }
+
+  function openWebSocket(token, configId) {
+    setStatus('wait', 'connecting to EVI...');
+    let url = 'wss://api.hume.ai/v0/evi/chat?access_token=' + encodeURIComponent(token);
+    if (configId) url += '&config_id=' + encodeURIComponent(configId);
+    ws = new WebSocket(url);
+    ws.onopen = () => {
+      connected = true;
+      setStatus('on', 'Connected');
+      connectBtn.textContent = 'Disconnect';
+      connectBtn.classList.replace('primary', 'danger');
+      connectBtn.disabled = false;
+      userInput.disabled = false;
+      userInput.focus();
+      inputHint.textContent = 'EV is locked in and ready to slay your infra issues';
+    };
+    ws.onmessage = (event) => {
+      let msg; try { msg = JSON.parse(event.data); } catch { return; }
+      handleWsMessage(msg);
+    };
+    ws.onerror = () => { setStatus('err', 'WebSocket error'); };
+    ws.onclose = (e) => {
+      if (connected) setStatus('off', 'disconnected (code ' + e.code + ')');
+      resetConnectionUI();
+    };
+  }
+
+  function disconnectWs() {
+    if (ws) { ws.close(); ws = null; }
+    resetConnectionUI();
+    setStatus('off', 'Disconnected');
+    stopAudioPlayback();
+  }
+
+  function resetConnectionUI() {
+    connected = false; busy = false; ws = null;
+    userHasSpoken = false; botInitiationCount = 0;
+    connectBtn.textContent = "Let's Go";
+    connectBtn.classList.replace('danger', 'primary');
+    connectBtn.disabled = false;
+    userInput.disabled = true;
+    sendBtn.disabled = true;
+    inputHint.textContent = 'connect to start vibing';
+    removeTypingIndicator();
+  }
+
+  /* WS message handler */
+  function handleWsMessage(msg) {
+    switch (msg.type) {
+      case 'chat_metadata': break;
+      case 'user_message': break;
+      case 'assistant_message': {
+        removeTypingIndicator();
+        const text = msg.message && msg.message.content || '';
+        if (!userHasSpoken) {
+          botInitiationCount++;
+          if (botInitiationCount > MAX_BOT_INITIATIONS) {
+            if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'pause_assistant_message' }));
+            break;
+          }
+        }
+        if (text) {
+          if (firstMsg) { welcomeEl.style.display = 'none'; firstMsg = false; }
+          currentAssistantRow = appendMessage('assistant', text);
+        }
+        break;
+      }
+      case 'audio_output': {
+        if (!userHasSpoken && botInitiationCount > MAX_BOT_INITIATIONS) break;
+        if (msg.data) {
+          turnAudioChunks.push(msg.data);
+          if (audioEnabled) enqueueAudio(msg.data);
+        }
+        break;
+      }
+      case 'assistant_end': {
+        busy = false;
+        if (currentAssistantRow && turnAudioChunks.length > 0) attachAudioReplayBtn(currentAssistantRow, [...turnAudioChunks]);
+        turnAudioChunks = [];
+        currentAssistantRow = null;
+        break;
+      }
+      case 'user_interruption': stopAudioPlayback(); break;
+      case 'error': {
+        removeTypingIndicator();
+        const errText = msg.message || msg.code || 'Unknown error';
+        appendMessage('error', 'Error: ' + errText);
+        busy = false;
+        break;
+      }
+      default: break;
+    }
+  }
+
+  /* Send user message */
+  function handleSend() {
+    const text = userInput.value.trim();
+    if (!text || !connected || busy) return;
+    if (firstMsg) { welcomeEl.style.display = 'none'; firstMsg = false; }
+    appendMessage('user', text);
+    userInput.value = '';
+    userInput.style.height = 'auto';
+    sendBtn.disabled = true;
+    busy = true;
+    stopAudioPlayback();
+    turnAudioChunks = [];
+    showTypingIndicator();
+    userHasSpoken = true;
+    ws.send(JSON.stringify({ type: 'user_input', text: text }));
+  }
+
+  /* Audio playback */
+  function enqueueAudio(base64Data) { audioQueue.push(base64Data); if (!isPlaying) playNext(); }
+  function playNext() {
+    if (audioQueue.length === 0) { isPlaying = false; return; }
+    isPlaying = true;
+    playBase64Audio(audioQueue.shift(), () => playNext());
+  }
+  function playBase64Audio(base64, onEnded) {
+    try {
+      const byteString = atob(base64);
+      const ab = new ArrayBuffer(byteString.length);
+      const ia = new Uint8Array(ab);
+      for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
+      const blob = new Blob([ab], { type: 'audio/wav' });
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      currentAudio = audio;
+      audio.onended = () => { URL.revokeObjectURL(url); currentAudio = null; if (onEnded) onEnded(); };
+      audio.onerror = () => { URL.revokeObjectURL(url); currentAudio = null; if (onEnded) onEnded(); };
+      audio.play().catch(() => { if (onEnded) onEnded(); });
+    } catch (e) { if (onEnded) onEnded(); }
+  }
+  function stopAudioPlayback() { audioQueue = []; isPlaying = false; if (currentAudio) { currentAudio.pause(); currentAudio = null; } }
+
+  function attachAudioReplayBtn(row, chunks) {
+    const contentEl = row.querySelector('.hh-msg-content');
+    if (!contentEl) return;
+    const btn = document.createElement('button');
+    btn.className = 'hh-msg-audio-btn';
+    btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> Play audio';
+    btn.addEventListener('click', () => { stopAudioPlayback(); chunks.forEach(c => enqueueAudio(c)); });
+    contentEl.appendChild(btn);
+  }
+
+  /* DOM helpers */
+  function appendMessage(role, text) {
+    const row = document.createElement('div');
+    row.className = 'hh-msg-row ' + role;
+    const icon = document.createElement('div');
+    icon.className = 'hh-msg-icon';
+    icon.textContent = role === 'user' ? 'U' : role === 'assistant' ? 'EV' : '!';
+    const content = document.createElement('div');
+    content.className = 'hh-msg-content';
+    const body = document.createElement('div');
+    body.className = 'hh-msg-body';
+    body.textContent = text;
+    content.appendChild(body);
+    row.appendChild(icon);
+    row.appendChild(content);
+    messagesEl.appendChild(row);
+    scrollToBottom();
+    return row;
+  }
+  function showTypingIndicator() {
+    removeTypingIndicator();
+    const row = document.createElement('div');
+    row.className = 'hh-msg-row assistant';
+    row.id = 'hh-typingRow';
+    const icon = document.createElement('div');
+    icon.className = 'hh-msg-icon';
+    icon.textContent = 'EV';
+    const dots = document.createElement('div');
+    dots.className = 'hh-typing-dots';
+    dots.innerHTML = '<span></span><span></span><span></span>';
+    row.appendChild(icon);
+    row.appendChild(dots);
+    messagesEl.appendChild(row);
+    scrollToBottom();
+  }
+  function removeTypingIndicator() { const el = document.getElementById('hh-typingRow'); if (el) el.remove(); }
+  function scrollToBottom() { messagesEl.scrollTop = messagesEl.scrollHeight; }
+  function setStatus(state, text) { statusDot.className = 'hh-status-dot ' + state; statusText.textContent = text; }
+})();
+</script>
+
+</body>
+</html>
