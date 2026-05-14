@@ -1,6 +1,19 @@
 {
   "assignments": [
     {
+      "id": "SEC5513-lab-a",
+      "title": "Lab A — Suspicious Login Risk Score",
+      "description": "Explainable risk score over a 14-day auth log; tune a threshold to a ≤10/day alert budget and evaluate with precision/recall.",
+      "path": "/assignments/SEC5513-lab-a/",
+      "status": "ready",
+      "tags": [
+        "Security",
+        "Classification",
+        "Threshold tuning",
+        "Precision/Recall"
+      ]
+    },
+    {
       "id": "cost-simulator",
       "title": "Cost Simulator",
       "description": "Configure usage and user growth assumptions, then compare monthly and total cost across selected LLM models.",
