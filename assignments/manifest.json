@@ -14,6 +14,14 @@
       ]
     },
     {
+      "id": "SEC5513-lab-b",
+      "title": "Lab B — User Session Anomaly",
+      "description": "Rank 7,000 user sessions by an anomaly score; review the top K and report precision@K with common false positives.",
+      "path": "/assignments/SEC5513-lab-b/",
+      "status": "ready",
+      "tags": ["Security", "Anomaly detection", "Top-K", "Precision@K"]
+    },
+    {
       "id": "cost-simulator",
       "title": "Cost Simulator",
       "description": "Configure usage and user growth assumptions, then compare monthly and total cost across selected LLM models.",

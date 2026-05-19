@@ -1,0 +1,623 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lab B — User Session Anomaly</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #fafafa;
+      --panel: #ffffff;
+      --line: #e5e5e5;
+      --line-hover: #cfcfcf;
+      --text: #0a0a0a;
+      --text-secondary: #666666;
+      --muted: #888888;
+      --accent: #0d7c5f;
+      --accent-hover: #0a6049;
+      --accent-soft: #f0faf6;
+      --danger: #dc2626;
+      --danger-soft: #fef2f2;
+      --warn: #b45309;
+      --warn-soft: #fffbeb;
+      --warn-border: #fde68a;
+      --radius: 10px;
+      --font: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font);
+      color: var(--text);
+      background: var(--bg);
+      min-height: 100vh;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 40px 24px 64px;
+    }
+
+    .crumb {
+      margin: 0 0 12px;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+    .crumb a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .crumb a:hover { text-decoration: underline; }
+
+    h1 {
+      font-size: 1.875rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      line-height: 1.2;
+      margin-bottom: 6px;
+    }
+    p.sub {
+      margin: 0 0 24px;
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+
+    .stack { display: grid; gap: 16px; }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+    .card h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      margin-bottom: 12px;
+    }
+    .card .note { color: var(--text-secondary); font-size: 0.85rem; }
+
+    .banner {
+      background: var(--warn-soft);
+      border-color: var(--warn-border);
+    }
+    .banner h2 { color: var(--warn); }
+    .banner p { color: #92400e; font-size: 0.88rem; }
+
+    .row-cards {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 900px) {
+      .row-cards { grid-template-columns: 1fr 1fr; }
+    }
+
+    .formula-list {
+      list-style: none;
+      display: grid;
+      gap: 6px;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+    .formula-list code {
+      color: var(--accent);
+      font-weight: 600;
+      font-family: var(--font);
+    }
+
+    .k-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 10px;
+    }
+    .k-row input[type="range"] {
+      flex: 1;
+      accent-color: var(--accent);
+    }
+    .k-value {
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      min-width: 2.5ch;
+      text-align: center;
+      color: var(--accent);
+    }
+    .k-presets {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .k-presets button {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font: inherit;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .k-presets button:hover { border-color: var(--line-hover); }
+    .k-presets button.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .pill-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .pill {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      background: var(--accent-soft);
+    }
+    .pill .name {
+      display: block;
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+    .pill .value {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    @media (max-width: 700px) {
+      .metrics-grid { grid-template-columns: 1fr; }
+    }
+    .metric-large {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 16px;
+      background: var(--accent-soft);
+    }
+    .metric-large .name {
+      display: block;
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .metric-large .value {
+      display: block;
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--accent);
+    }
+    .metric-large.fp .value { color: var(--danger); }
+    .metric-large .raw {
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      margin-top: 4px;
+    }
+
+    .fp-breakdown {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 700px) {
+      .fp-breakdown { grid-template-columns: 1fr; }
+    }
+    .fp-col h3 {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .fp-col ul {
+      list-style: none;
+      display: grid;
+      gap: 4px;
+      font-size: 0.88rem;
+    }
+    .fp-col li {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 4px 8px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+    }
+    .fp-col li .key { color: var(--text); }
+    .fp-col li .count {
+      color: var(--danger);
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+    .fp-empty {
+      color: var(--muted);
+      font-size: 0.85rem;
+      padding: 8px 0;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      max-height: 560px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.84rem;
+    }
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 8px 10px;
+      text-align: left;
+      white-space: nowrap;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    th {
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      background: var(--bg);
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    td.center, th.center { text-align: center; }
+    td.right, th.right { text-align: right; font-variant-numeric: tabular-nums; }
+    tr.fp { background: var(--danger-soft); }
+    tr.fp:hover { background: #fff1f1; }
+
+    .rank-cell {
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 1px 7px;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      min-width: 18px;
+      text-align: center;
+    }
+    .badge.pos { background: var(--accent-soft); color: var(--accent); }
+    .badge.neg { background: var(--bg); color: var(--muted); }
+    .badge.alert { background: var(--danger-soft); color: var(--danger); }
+
+    textarea {
+      width: 100%;
+      min-height: 140px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      font: inherit;
+      font-size: 0.92rem;
+      resize: vertical;
+      background: #fff;
+      color: var(--text);
+      line-height: 1.55;
+    }
+    textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    .word-count {
+      color: var(--muted);
+      font-size: 0.78rem;
+      margin-top: 6px;
+    }
+    .word-count.over { color: var(--warn); }
+
+    .loading {
+      color: var(--muted);
+      font-size: 0.9rem;
+      padding: 20px;
+      text-align: center;
+    }
+
+    @media (max-width: 600px) {
+      h1 { font-size: 1.5rem; }
+      .wrap { padding: 28px 16px 48px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <p class="crumb"><a href="/">← Assignment Directory</a></p>
+    <h1>Lab B — User Session Anomaly</h1>
+    <p class="sub">Rank 7,000 user sessions by an anomaly score. Review the top K and report precision@K.</p>
+
+    <div class="stack">
+      <div id="banner" class="card banner" hidden>
+        <h2>Synthetic labels in use</h2>
+        <p id="banner-text"></p>
+      </div>
+
+      <div class="row-cards">
+        <div class="card">
+          <h2>Anomaly score formula</h2>
+          <ul class="formula-list">
+            <li><code>+1</code> if off_hours (hour &lt; 8 or &gt; 18)</li>
+            <li><code>+1</code> if unusual_country (CN, RU, IR, KP, NG, BR, UA)</li>
+            <li><code>+1</code> if high_bytes_out (&gt; 4,000,000 bytes)</li>
+          </ul>
+          <p class="note" style="margin-top:10px">Score range: 0–3. Tiebreaker: bytes_out descending.</p>
+        </div>
+
+        <div class="card">
+          <h2>Review budget (K)</h2>
+          <div class="k-row">
+            <span class="k-value" id="k-val">50</span>
+            <input id="k" type="range" min="1" max="200" step="1" value="50" aria-label="Top-K">
+          </div>
+          <div class="k-presets" id="k-presets">
+            <button data-k="10">10</button>
+            <button data-k="25">25</button>
+            <button data-k="50" class="active">50</button>
+            <button data-k="100">100</button>
+          </div>
+          <p class="note" style="margin-top:10px">Assignment target: K = 50.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Metrics</h2>
+        <div class="metrics-grid">
+          <div class="metric-large">
+            <span class="name">Precision @ K</span>
+            <span class="value" id="m-prec">—</span>
+            <div class="raw" id="m-prec-raw"></div>
+          </div>
+          <div class="metric-large">
+            <span class="name">True positives</span>
+            <span class="value" id="m-tp">—</span>
+            <div class="raw">in top K</div>
+          </div>
+          <div class="metric-large fp">
+            <span class="name">False positives</span>
+            <span class="value" id="m-fp">—</span>
+            <div class="raw">in top K</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Common false positives in top K</h2>
+        <div class="fp-breakdown">
+          <div class="fp-col">
+            <h3>By country</h3>
+            <ul id="fp-country"></ul>
+          </div>
+          <div class="fp-col">
+            <h3>By user</h3>
+            <ul id="fp-user"></ul>
+          </div>
+          <div class="fp-col">
+            <h3>By device</h3>
+            <ul id="fp-device"></ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Top K sessions (sorted by score desc, bytes_out desc)</h2>
+        <p class="note" style="margin-bottom:10px">False-positive rows shaded red.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="right">#</th>
+                <th>Timestamp</th>
+                <th>User</th>
+                <th>Country</th>
+                <th>Device</th>
+                <th class="right">Bytes out</th>
+                <th class="center">Duration (m)</th>
+                <th class="center">Off hrs</th>
+                <th class="center">Unusual ctry</th>
+                <th class="center">High bytes</th>
+                <th class="center">Score</th>
+                <th class="center">Label</th>
+              </tr>
+            </thead>
+            <tbody id="top-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Reflection (150-word target)</h2>
+        <textarea id="rationale" placeholder="What does precision@50 look like, and what patterns do you see in the false positives? Propose one practical tuning idea (e.g., per-user baselines)."></textarea>
+        <p class="word-count" id="word-count">0 words</p>
+      </div>
+    </div>
+
+    <p id="loading" class="loading">Loading data…</p>
+  </div>
+
+  <script>
+    const SYNTHETIC_LABELS = true;
+    const PROXY_RULE_DESC = 'Labels are synthetic placeholders generated by the rule "score=3 AND country ∉ {BR, NG} AND bytes_out > 8,000,000" with ~8% random bit flips. BR and NG are deliberately seeded as noisy false positives. Replace data.json with the instructor key before reporting final precision@K.';
+    const UNUSUAL = new Set(['CN','RU','IR','KP','NG','BR','UA']);
+
+    function esc(s) {
+      const d = document.createElement('div');
+      d.textContent = s == null ? '' : String(s);
+      return d.innerHTML;
+    }
+
+    function scoreOf(r) {
+      const hour = Number(r.timestamp.slice(11, 13));
+      const off = hour < 8 || hour > 18 ? 1 : 0;
+      const uc  = UNUSUAL.has(r.country) ? 1 : 0;
+      const hb  = r.bytes_out > 4_000_000 ? 1 : 0;
+      return { score: off + uc + hb, off, uc, hb };
+    }
+
+    function fmtPct(x) {
+      if (!isFinite(x)) return '—';
+      return (x * 100).toFixed(1) + '%';
+    }
+    function fmtBytes(n) {
+      return n.toLocaleString();
+    }
+    function fmtNum(x) { return x.toLocaleString(); }
+
+    async function init() {
+      let rows;
+      try {
+        rows = await fetch('./data.json', { cache: 'no-store' }).then(r => r.json());
+      } catch (e) {
+        document.getElementById('loading').textContent = 'Could not load data.json.';
+        return;
+      }
+      document.getElementById('loading').remove();
+
+      const scored = rows.map(r => {
+        const { score, off, uc, hb } = scoreOf(r);
+        return { ...r, _score: score, _off: off, _uc: uc, _hb: hb };
+      });
+      scored.sort((a, b) => b._score - a._score || b.bytes_out - a.bytes_out);
+
+      if (SYNTHETIC_LABELS) {
+        const banner = document.getElementById('banner');
+        banner.hidden = false;
+        document.getElementById('banner-text').textContent = PROXY_RULE_DESC;
+      }
+
+      const kInput = document.getElementById('k');
+      const kVal = document.getElementById('k-val');
+      const presets = document.querySelectorAll('#k-presets button');
+      const maxK = scored.length;
+      kInput.max = Math.min(200, maxK);
+
+      function updatePresetActive(k) {
+        presets.forEach(b => b.classList.toggle('active', Number(b.dataset.k) === k));
+      }
+
+      function topByGroup(items, key, n) {
+        const c = new Map();
+        for (const r of items) c.set(r[key], (c.get(r[key]) || 0) + 1);
+        return [...c.entries()].sort((a, b) => b[1] - a[1]).slice(0, n);
+      }
+
+      function renderFPList(elId, pairs) {
+        const el = document.getElementById(elId);
+        if (!pairs.length) {
+          el.innerHTML = '<li class="fp-empty">None at current K</li>';
+          return;
+        }
+        el.innerHTML = pairs.map(([k, c]) =>
+          `<li><span class="key">${esc(k)}</span><span class="count">${c}</span></li>`
+        ).join('');
+      }
+
+      function render() {
+        const K = Math.min(+kInput.value, scored.length);
+        kVal.textContent = K;
+        updatePresetActive(K);
+
+        const top = scored.slice(0, K);
+        let tp = 0, fp = 0;
+        const fps = [];
+        for (const r of top) {
+          if (r.label) tp++;
+          else { fp++; fps.push(r); }
+        }
+
+        const prec = K === 0 ? NaN : tp / K;
+        document.getElementById('m-prec').textContent = fmtPct(prec);
+        document.getElementById('m-prec-raw').textContent = `${tp} of ${K}`;
+        document.getElementById('m-tp').textContent = fmtNum(tp);
+        document.getElementById('m-fp').textContent = fmtNum(fp);
+
+        renderFPList('fp-country', topByGroup(fps, 'country', 5));
+        renderFPList('fp-user',    topByGroup(fps, 'user', 5));
+        renderFPList('fp-device',  topByGroup(fps, 'device', 5));
+
+        const tbody = document.getElementById('top-body');
+        tbody.innerHTML = top.map((r, i) => {
+          const tsShort = r.timestamp.replace('T', ' ').slice(0, 16);
+          const labelBadge = r.label
+            ? '<span class="badge alert">1</span>'
+            : '<span class="badge neg">0</span>';
+          const cls = r.label ? '' : ' class="fp"';
+          return `<tr${cls}>`
+            + `<td class="right rank-cell">${i + 1}</td>`
+            + `<td>${esc(tsShort)}</td>`
+            + `<td>${esc(r.user)}</td>`
+            + `<td>${esc(r.country)}</td>`
+            + `<td>${esc(r.device)}</td>`
+            + `<td class="right">${esc(fmtBytes(r.bytes_out))}</td>`
+            + `<td class="center">${esc(r.session_duration_min)}</td>`
+            + `<td class="center">${esc(r._off)}</td>`
+            + `<td class="center">${esc(r._uc)}</td>`
+            + `<td class="center">${esc(r._hb)}</td>`
+            + `<td class="center"><strong>${esc(r._score)}</strong></td>`
+            + `<td class="center">${labelBadge}</td>`
+            + `</tr>`;
+        }).join('');
+      }
+
+      kInput.addEventListener('input', render);
+      presets.forEach(b => b.addEventListener('click', () => {
+        kInput.value = b.dataset.k;
+        render();
+      }));
+
+      const ta = document.getElementById('rationale');
+      const wc = document.getElementById('word-count');
+      const key = 'lab-b:rationale';
+      ta.value = localStorage.getItem(key) || '';
+      const updateWC = () => {
+        const n = ta.value.trim() ? ta.value.trim().split(/\s+/).length : 0;
+        wc.textContent = `${n} word${n === 1 ? '' : 's'}` + (n > 150 ? ' (over 150-word target)' : '');
+        wc.classList.toggle('over', n > 150);
+      };
+      ta.addEventListener('input', () => {
+        localStorage.setItem(key, ta.value);
+        updateWC();
+      });
+      updateWC();
+
+      render();
+    }
+
+    init();
+  </script>
+</body>
+</html>
