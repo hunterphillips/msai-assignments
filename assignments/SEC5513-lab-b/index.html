@@ -295,8 +295,39 @@
     }
     td.center, th.center { text-align: center; }
     td.right, th.right { text-align: right; font-variant-numeric: tabular-nums; }
+    th.sortable { cursor: pointer; user-select: none; }
+    th.sortable:hover { color: var(--text); }
+    th.sortable .sort-icon {
+      display: inline-block;
+      margin-left: 4px;
+      color: var(--accent);
+      opacity: 0;
+      font-size: 0.85em;
+    }
+    th.sortable.active { color: var(--accent); }
+    th.sortable.active .sort-icon { opacity: 1; }
     tr.fp { background: var(--danger-soft); }
     tr.fp:hover { background: #fff1f1; }
+
+    .table-toolbar {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .table-toolbar .reset-sort {
+      background: none;
+      border: 1px solid var(--line);
+      color: var(--text-secondary);
+      font: inherit;
+      font-size: 0.78rem;
+      padding: 4px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .table-toolbar .reset-sort:hover { border-color: var(--line-hover); color: var(--text); }
+    .table-toolbar .reset-sort[hidden] { display: none; }
 
     .rank-cell {
       color: var(--muted);
@@ -434,24 +465,27 @@
       </div>
 
       <div class="card">
-        <h2>Top K sessions (sorted by score desc, bytes_out desc)</h2>
-        <p class="note" style="margin-bottom:10px">False-positive rows shaded red.</p>
+        <h2>Top K sessions</h2>
+        <p class="note">Default sort: score desc, then bytes_out desc. Click any column header to re-sort. False-positive rows shaded red.</p>
+        <div class="table-toolbar">
+          <button id="reset-sort" class="reset-sort" hidden>Reset to default order</button>
+        </div>
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
                 <th class="right">#</th>
-                <th>Timestamp</th>
-                <th>User</th>
-                <th>Country</th>
-                <th>Device</th>
-                <th class="right">Bytes out</th>
-                <th class="center">Duration (m)</th>
-                <th class="center">Off hrs</th>
-                <th class="center">Unusual ctry</th>
-                <th class="center">High bytes</th>
-                <th class="center">Score</th>
-                <th class="center">Label</th>
+                <th class="sortable" data-sort="timestamp" data-type="string">Timestamp<span class="sort-icon"></span></th>
+                <th class="sortable" data-sort="user" data-type="string">User<span class="sort-icon"></span></th>
+                <th class="sortable" data-sort="country" data-type="string">Country<span class="sort-icon"></span></th>
+                <th class="sortable" data-sort="device" data-type="string">Device<span class="sort-icon"></span></th>
+                <th class="right sortable" data-sort="bytes_out" data-type="number">Bytes out<span class="sort-icon"></span></th>
+                <th class="center sortable" data-sort="session_duration_min" data-type="number">Duration (m)<span class="sort-icon"></span></th>
+                <th class="center sortable" data-sort="_off" data-type="number">Off hrs<span class="sort-icon"></span></th>
+                <th class="center sortable" data-sort="_uc" data-type="number">Unusual ctry<span class="sort-icon"></span></th>
+                <th class="center sortable" data-sort="_hb" data-type="number">High bytes<span class="sort-icon"></span></th>
+                <th class="center sortable" data-sort="_score" data-type="number">Score<span class="sort-icon"></span></th>
+                <th class="center sortable" data-sort="label" data-type="number">Label<span class="sort-icon"></span></th>
               </tr>
             </thead>
             <tbody id="top-body"></tbody>
@@ -546,12 +580,58 @@
         ).join('');
       }
 
+      const sort = { field: null, dir: 'desc', type: 'number' };
+
+      function applySort(rows) {
+        if (!sort.field) {
+          return rows.slice().sort((a, b) => b._score - a._score || b.bytes_out - a.bytes_out);
+        }
+        const { field, dir, type } = sort;
+        const mul = dir === 'asc' ? 1 : -1;
+        return rows.slice().sort((a, b) => {
+          const av = a[field], bv = b[field];
+          let cmp;
+          if (type === 'number') cmp = av - bv;
+          else cmp = String(av).localeCompare(String(bv));
+          return cmp * mul;
+        });
+      }
+
+      function updateSortHeaders() {
+        document.querySelectorAll('th.sortable').forEach(th => {
+          const isActive = th.dataset.sort === sort.field;
+          th.classList.toggle('active', isActive);
+          th.querySelector('.sort-icon').textContent = isActive ? (sort.dir === 'asc' ? '▲' : '▼') : '';
+        });
+        document.getElementById('reset-sort').hidden = !sort.field;
+      }
+
+      document.querySelectorAll('th.sortable').forEach(th => {
+        th.addEventListener('click', () => {
+          const f = th.dataset.sort;
+          if (sort.field === f) {
+            sort.dir = sort.dir === 'asc' ? 'desc' : 'asc';
+          } else {
+            sort.field = f;
+            sort.type = th.dataset.type || 'string';
+            sort.dir = sort.type === 'number' ? 'desc' : 'asc';
+          }
+          render();
+        });
+      });
+
+      document.getElementById('reset-sort').addEventListener('click', () => {
+        sort.field = null;
+        render();
+      });
+
       function render() {
         const K = Math.min(+kInput.value, scored.length);
         kVal.textContent = K;
         updatePresetActive(K);
 
-        const top = scored.slice(0, K);
+        const top = applySort(scored.slice(0, K));
+        updateSortHeaders();
         let tp = 0, fp = 0;
         const fps = [];
         for (const r of top) {
